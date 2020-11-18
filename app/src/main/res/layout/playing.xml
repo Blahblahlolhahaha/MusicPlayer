@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@color/black">
+    <androidx.cardview.widget.CardView
+        android:layout_width="240dp"
+        android:layout_height="240dp"
+        app:cardCornerRadius="15dp"
+        android:layout_marginBottom="20dp">
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/album_art"
+            android:layout_width="240dp"
+            android:layout_height="240dp"/>
+    </androidx.cardview.widget.CardView>
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/song_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ffffff"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:textSize="25dp"
+        android:layout_marginBottom="10dp"/>
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/artist"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ffffff"
+        android:textColor="@color/white"
+        android:textSize="18dp"
+        android:layout_marginBottom="50dp"/>
+    <androidx.core.widget.ContentLoadingProgressBar
+        android:layout_width="350dp"
+        android:layout_height="5dp"
+        android:layout_marginBottom="20dp"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="10dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/shuffle"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:background="@drawable/shuffle"
+            android:backgroundTint="@color/white"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="20dp"
+            android:layout_gravity="center"/>
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/previous"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/previous"
+            android:layout_marginEnd="20dp"/>
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/play"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/play"
+            android:layout_marginEnd="20dp"/>
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/next"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/next"
+            android:layout_marginEnd="20dp"/>
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/repeat"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/repeat"/>
+    </LinearLayout>
+
+
+
+
+
+</androidx.appcompat.widget.LinearLayoutCompat>
