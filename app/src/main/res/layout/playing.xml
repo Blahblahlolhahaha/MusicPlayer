@@ -32,6 +32,7 @@
         android:text="ffffff"
         android:textColor="@color/white"
         android:textSize="18dp"
+        android:textAlignment="center"
         android:layout_marginBottom="50dp"/>
     <androidx.core.widget.ContentLoadingProgressBar
         android:layout_width="350dp"
@@ -40,7 +41,6 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="10dp"
         android:gravity="center"
         android:orientation="horizontal">
         <androidx.appcompat.widget.AppCompatImageButton
@@ -57,13 +57,13 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@drawable/previous"
-            android:layout_marginEnd="20dp"/>
+            android:layout_marginEnd="30dp"/>
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/play"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@drawable/play"
-            android:layout_marginEnd="20dp"/>
+            android:layout_marginEnd="30dp"/>
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/next"
             android:layout_width="50dp"
