@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 
+import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.workers.SongManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -14,6 +15,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.os.PersistableBundle;
 import android.provider.MediaStore;
@@ -33,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    private SongManager songManager;
+
     private final String LOG_TAG = "Music Player";
 
     @Override
@@ -41,38 +44,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         isStoragePermissionGranted();
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-        String[] projection = {
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.ARTIST_ID,
-                MediaStore.Audio.Media.ALBUM_ID,
-                MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.YEAR
-        };
-        Cursor cursor = getApplicationContext().getContentResolver().query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                selection,
-                null,
-                null
-        );
-        ArrayList<HashMap<String,String>> songs = new ArrayList<>();
-        while(cursor.moveToNext()){
-            HashMap<String,String> song = new HashMap<>();
-            song.put("ID",cursor.getString(0));
-            song.put("title",cursor.getString(1));
-            song.put("data",cursor.getString(2));
-            song.put("display_name",cursor.getString(3));
-            song.put("artist",cursor.getString(4));
-            song.put("album",cursor.getString(5));
-            song.put("duration",cursor.getString(6));
-            song.put("year",cursor.getString(7));
-            songs.add(song);
-        }
-        songManager = new SongManager(songs);
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment,new MainFragment()).commit();
     }
 
     public  boolean isStoragePermissionGranted() {
