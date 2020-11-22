@@ -2,6 +2,7 @@ package com.example.musicplayer.workers;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.provider.MediaStore;
 
 import org.json.JSONArray;
@@ -11,10 +12,10 @@ import java.util.HashMap;
 
 public class SongManager {
     private ArrayList<HashMap<String,String>> songs;
-    private HashMap<String,String> album;
+    private HashMap<String,Bitmap> album;
     private HashMap<String,String> artist;
 
-    public SongManager(ArrayList<HashMap<String,String>> s,HashMap<String,String> a,HashMap<String,String> b){
+    public SongManager(ArrayList<HashMap<String,String>> s, HashMap<String, Bitmap> a, HashMap<String,String> b){
         songs = s;
         album = a;
         artist = b;
@@ -24,7 +25,7 @@ public class SongManager {
         return songs;
     }
 
-    public HashMap<String, String> getAlbum() {
+    public HashMap<String, Bitmap> getAlbum() {
         return album;
     }
 

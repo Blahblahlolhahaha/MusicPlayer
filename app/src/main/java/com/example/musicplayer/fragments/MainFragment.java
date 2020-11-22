@@ -1,6 +1,9 @@
 package com.example.musicplayer.fragments;
 
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
@@ -70,7 +73,7 @@ public class MainFragment extends Fragment {
                 null
         );
         ArrayList<HashMap<String,String>> songs = new ArrayList<>();
-        HashMap<String,String> album = new HashMap<>();
+        HashMap<String,Bitmap> album = new HashMap<>();
         HashMap<String,String> artist = new HashMap<>();
         while(cursor.moveToNext()){
             HashMap<String,String> song = new HashMap<>();
@@ -83,15 +86,16 @@ public class MainFragment extends Fragment {
             song.put("duration",cursor.getString(6));
             song.put("year",cursor.getString(7));
             songs.add(song);
-        }
-        while(c.moveToNext()){
-            if(c.getString(1)!=null){
-                album.put(c.getString(0),c.getString(1));
+            if(album.get(cursor.getString(5)) == null){
+                MediaMetadataRetriever mmr =  new MediaMetadataRetriever();
+                mmr.setDataSource(cursor.getString(2));
+                byte[] picArray = mmr.getEmbeddedPicture();
+                if(picArray!=null){
+                    Bitmap art = BitmapFactory.decodeByteArray(picArray,0,picArray.length);
+                    album.put(cursor.getString(5),art);
+                }
+            }
 
-            }
-            else{
-                album.put(c.getString(0),"");
-            }
         }
         while(cc.moveToNext()){
             artist.put(cc.getString(0),cc.getString(1));
