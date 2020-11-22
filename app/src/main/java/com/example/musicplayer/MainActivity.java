@@ -1,12 +1,14 @@
 package com.example.musicplayer;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 
 import com.example.musicplayer.fragments.MainFragment;
+import com.example.musicplayer.workers.MusicPlayer;
 import com.example.musicplayer.workers.SongManager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -76,4 +78,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public View.OnClickListener getOnclickListener(int position,ArrayList<HashMap<String,String>> songs){
+        return view -> {
+            Intent intent = new Intent(this, MusicPlayer.class);
+            intent.putExtra("songs",songs);
+            intent.putExtra("start",position);
+            startService(intent);
+            };
+    }
 }

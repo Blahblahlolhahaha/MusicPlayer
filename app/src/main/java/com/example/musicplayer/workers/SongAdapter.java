@@ -2,6 +2,7 @@ package com.example.musicplayer.workers;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,6 +15,7 @@ import android.net.Uri;
 import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -22,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 
 import java.io.File;
@@ -64,9 +67,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         albumArt.setImageBitmap(album_art);
         artist.setText(artists.get(songs.get(position).get("artist")));
         songName.setText(songs.get(position).get("title"));
-        holder.cardView.setOnClickListener(view -> {
-            MediaPlayer.create(context,Uri.parse(songs.get(position).get("data"))).start();
-        });
+        holder.bind(((MainActivity)context).getOnclickListener(position,songs));
     }
 
     @Override
@@ -79,6 +80,9 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         public SongViewHolder(@NonNull CardView c) {
             super(c);
             cardView = c;
+        }
+        public void bind(View.OnClickListener callback){
+            cardView.setOnClickListener(callback);
         }
     }
 }
