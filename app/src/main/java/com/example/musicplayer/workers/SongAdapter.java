@@ -56,16 +56,9 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         ImageView albumArt = holder.cardView.findViewById(R.id.album_art);
         TextView artist = holder.cardView.findViewById(R.id.artist);
         TextView songName = holder.cardView.findViewById(R.id.song_name);
-//        MediaMetadataRetriever mmr =  new MediaMetadataRetriever();
-//        mmr.setDataSource(songs.get(position).get("data"));
-//        byte[] picArray = mmr.getEmbeddedPicture();
-//        if(picArray!=null){
-//            Bitmap art = BitmapFactory.decodeByteArray(picArray,0,picArray.length);
-//            albumArt.setImageBitmap(art);
-//        }
         Bitmap album_art = albums.get(songs.get(position).get("album"));
         albumArt.setImageBitmap(album_art);
-        artist.setText(artists.get(songs.get(position).get("artist")));
+        artist.setText(songs.get(position).get("artist"));
         songName.setText(songs.get(position).get("title"));
         holder.bind(((MainActivity)context).getOnclickListener(position,songs));
     }

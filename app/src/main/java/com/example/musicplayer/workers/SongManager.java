@@ -32,4 +32,8 @@ public class SongManager {
     public HashMap<String, String> getArtist() {
         return artist;
     }
+
+    public Bitmap getAlbumArt(String albumName){
+        return album.get(albumName);
+    }
 }
