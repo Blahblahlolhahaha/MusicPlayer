@@ -76,6 +76,22 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 MusicPlayer.MusicPlayerBinder binder = (MusicPlayer.MusicPlayerBinder) iBinder;
                 musicPlayer = binder.getService();
                 musicPlayer.registerCallback(MainActivity.this);
+                play.setOnClickListener(view -> {
+                    if(musicPlayer.getPlayingStatus()){
+                        play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.play));
+                        musicPlayer.pause();
+                    }
+                    else{
+                        play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+                        musicPlayer.play();
+                    }
+                });
+                previous.setOnClickListener(view -> {
+                    musicPlayer.previous();
+                });
+                next.setOnClickListener(view -> {
+                    musicPlayer.next();
+                });
             }
 
             @Override
@@ -119,12 +135,17 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public View.OnClickListener getOnclickListener(int position,ArrayList<HashMap<String,String>> songs){
         return view -> {
-            intent = new Intent(this, MusicPlayer.class);
-            intent.putExtra("songs",songs);
-            intent.putExtra("start",position);
-            bindService();
-            startService(intent);
-
+            if(musicPlayer!=null){
+                musicPlayer.playAnotherSong(position);
+            }
+            else{
+                intent = new Intent(this, MusicPlayer.class);
+                intent.putExtra("songs",songs);
+                intent.putExtra("start",position);
+                bindService();
+                startService(intent);
+                play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+            }
         };
     }
 
@@ -132,6 +153,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         songNameTextView.setText(songName);
         artistTextView.setText(artist);
         albumArtView.setImageBitmap(getAlbumArt(album));
+
     }
 
     private void bindService(){

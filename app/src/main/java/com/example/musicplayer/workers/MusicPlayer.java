@@ -29,9 +29,8 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         songs = (ArrayList<HashMap<String, String>>) bundle.get("songs");
         int start = bundle.getInt("start");
         shuffle = getApplicationContext().getSharedPreferences("settings",0).getBoolean("shuffle",false);
-        mediaPlayer = MediaPlayer.create(getApplicationContext(), Uri.parse(songs.get(start).get("data")));
-        mediaPlayer.setOnPreparedListener(this);
         current = start;
+        createMusicPlayer();
         return START_NOT_STICKY;
     }
     public void registerCallback(Callback callback){
@@ -63,5 +62,27 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
     public void play(){
         mediaPlayer.start();
+    }
+    public void next(){
+        mediaPlayer.stop();
+        mediaPlayer.release();
+        current++;
+        createMusicPlayer();
+    }
+    public void previous(){
+        mediaPlayer.stop();
+        mediaPlayer.release();
+        current--;
+        createMusicPlayer();
+    }
+    public void playAnotherSong(int position){
+        mediaPlayer.stop();
+        mediaPlayer.release();
+        current = position;
+        createMusicPlayer();
+    }
+    private void createMusicPlayer(){
+        mediaPlayer = MediaPlayer.create(getApplicationContext(), Uri.parse(songs.get(current).get("data")));
+        mediaPlayer.setOnPreparedListener(this);
     }
 }
