@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        playingFragment = new PlayingFragment();
         artistTextView = findViewById(R.id.artist);
         songNameTextView = findViewById(R.id.song_name);
         albumArtView = findViewById(R.id.album_art);
@@ -100,7 +101,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
         getSongs();
         playing.setOnClickListener(view -> {
             if(!songNameTextView.getText().toString().equals("No music playing!")){
-                playingFragment = new PlayingFragment(artistTextView.getText().toString(),songNameTextView.getText().toString(),albumArtView.getBackground());
                 FragmentManager fragmentManager = getSupportFragmentManager();
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.add(R.id.fragment,playingFragment).addToBackStack("yes").commit();
@@ -159,8 +159,9 @@ public class MainActivity extends AppCompatActivity implements Callback {
     public void callback(String songName, String artist, String album){
         songNameTextView.setText(songName);
         artistTextView.setText(artist);
-        albumArtView.setImageBitmap(getAlbumArt(album));
-
+        Bitmap albumArt = getAlbumArt(album);
+        albumArtView.setImageBitmap(albumArt);
+        playingFragment.setSongInfo(songName,artist,albumArt);
     }
 
     public Bitmap getAlbumArt(String album){

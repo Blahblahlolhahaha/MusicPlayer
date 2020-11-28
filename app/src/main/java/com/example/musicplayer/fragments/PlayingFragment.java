@@ -1,5 +1,6 @@
 package com.example.musicplayer.fragments;
 
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -25,12 +26,7 @@ public class PlayingFragment extends Fragment {
     private ImageView albumArtView;
     private ImageButton play,previous,next,repeat,shuffle;
     private String artist,song;
-    private Drawable albumArt;
-    public PlayingFragment(String artist, String song, Drawable albumArt) {
-        this.artist = artist;
-        this.song = song;
-        this.albumArt = albumArt;
-    }
+    private Bitmap albumArt;
 
     @Nullable
     @Override
@@ -51,7 +47,7 @@ public class PlayingFragment extends Fragment {
         shuffle = view.findViewById(R.id.playing_shuffle);
         artistTextView.setText(artist);
         songNameTextView.setText(song);
-        albumArtView.setBackground(albumArt);
+        albumArtView.setImageBitmap(albumArt);
         MusicPlayer musicPlayer = ((MainActivity)getContext()).getMusicPlayer();
         play.setOnClickListener(view0 -> {
             if(musicPlayer.getPlayingStatus()){
@@ -77,5 +73,16 @@ public class PlayingFragment extends Fragment {
                 Toast.makeText(getContext(),"Shuffle disabled",Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    public void setSongInfo(String songName, String artist, Bitmap album){
+        song = songName;
+        this.artist = artist;
+        this.albumArt = album;
+        if(songNameTextView != null){
+            songNameTextView.setText(songName);
+            artistTextView.setText(artist);
+            albumArtView.setImageBitmap(album);
+        }
+
     }
 }
