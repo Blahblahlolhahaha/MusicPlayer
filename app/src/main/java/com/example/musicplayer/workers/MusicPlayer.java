@@ -2,6 +2,7 @@ package com.example.musicplayer.workers;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
@@ -13,23 +14,31 @@ import androidx.annotation.Nullable;
 import com.example.musicplayer.interfaces.Callback;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListener {
     private static final String ACTION_PLAY = "com.example.action.PLAY";
     private MediaPlayer mediaPlayer = null;
+    private ArrayList<HashMap<String,String>> original;
     private ArrayList<HashMap<String,String>> songs;
     private int current;
     private boolean shuffle;
     private IBinder musicPlayerBinder = new MusicPlayerBinder();
     private Callback callback;
+    private Bundle bundle;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Bundle bundle = intent.getExtras();
-        songs = (ArrayList<HashMap<String, String>>) bundle.get("songs");
+        bundle = intent.getExtras();
+        original = (ArrayList<HashMap<String, String>>) bundle.get("songs");
+        songs = (ArrayList<HashMap<String, String>>) original.clone();
         int start = bundle.getInt("start");
-        shuffle = getApplicationContext().getSharedPreferences("settings",0).getBoolean("shuffle",false);
+        shuffle = getSharedPreferences("settings",0).getBoolean("shuffle",false);
         current = start;
+        if(shuffle){
+            shuffle();
+        }
         createMusicPlayer();
         return START_NOT_STICKY;
     }
@@ -81,8 +90,39 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         current = position;
         createMusicPlayer();
     }
+
+    public boolean setShuffle() {
+        SharedPreferences.Editor editor = getSharedPreferences("settings",0).edit();
+        editor.putBoolean("shuffle", !shuffle);
+        editor.apply();
+        shuffle = !shuffle;
+        if(shuffle){
+            shuffle();
+        }
+        else{
+            HashMap<String,String> current_song = songs.get(current);
+            songs = (ArrayList<HashMap<String, String>>) original.clone();
+            current = songs.indexOf(current_song);
+        }
+        return shuffle;
+    }
+
+    public void shuffle(){
+        HashMap<String,String> current_song = songs.get(current);
+        songs.remove(current);
+        Collections.shuffle(songs);
+        Collections.reverse(songs);
+        songs.add(current_song);
+        Collections.reverse(songs);
+        current = 0;
+    }
     private void createMusicPlayer(){
         mediaPlayer = MediaPlayer.create(getApplicationContext(), Uri.parse(songs.get(current).get("data")));
         mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.setOnCompletionListener(mediaPlayer1 -> {
+            mediaPlayer1.release();
+            current++;
+            createMusicPlayer();
+        });
     }
 }

@@ -32,7 +32,7 @@
                 android:id="@+id/song_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="fffffff"
+                android:text="No music playing!"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"/>
@@ -40,7 +40,7 @@
                 android:id="@+id/artist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="vdfvv"
+                android:text=""
                 android:textSize="15sp"
                 android:textColor="@color/white"/>
         </LinearLayout>

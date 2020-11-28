@@ -12,12 +12,12 @@
         app:cardCornerRadius="15dp"
         android:layout_marginBottom="20dp">
         <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/album_art"
+            android:id="@+id/playing_album_art"
             android:layout_width="240dp"
             android:layout_height="240dp"/>
     </androidx.cardview.widget.CardView>
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/song_name"
+        android:id="@+id/playing_song_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ffffff"
@@ -26,7 +26,7 @@
         android:textSize="25dp"
         android:layout_marginBottom="10dp"/>
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/artist"
+        android:id="@+id/playing_artist"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="ffffff"
@@ -44,7 +44,7 @@
         android:gravity="center"
         android:orientation="horizontal">
         <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/shuffle"
+            android:id="@+id/playing_shuffle"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:background="@drawable/shuffle"
@@ -53,25 +53,25 @@
             android:layout_marginEnd="20dp"
             android:layout_gravity="center"/>
         <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/previous"
+            android:id="@+id/playing_previous"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@drawable/previous"
             android:layout_marginEnd="30dp"/>
         <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/play"
+            android:id="@+id/playing_play"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@drawable/play"
             android:layout_marginEnd="30dp"/>
         <androidx.appcompat.widget.AppCompatImageButton
-            android:id="@+id/next"
+            android:id="@+id/playing_next"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@drawable/next"
             android:layout_marginEnd="20dp"/>
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/repeat"
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/playing_repeat"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:background="@drawable/repeat"/>

@@ -14,39 +14,32 @@ import android.os.Build;
 import android.os.Bundle;
 
 import com.example.musicplayer.fragments.MainFragment;
+import com.example.musicplayer.fragments.PlayingFragment;
 import com.example.musicplayer.interfaces.Callback;
 import com.example.musicplayer.workers.MusicPlayer;
 import com.example.musicplayer.workers.SongManager;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
+import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.os.IBinder;
-import android.os.PersistableBundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements Callback {
@@ -60,6 +53,9 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private Intent intent;
     private ImageButton play,previous,next;
     private ServiceConnection serviceConnection;
+    private LinearLayoutCompat playing;
+    private boolean isPlaying;
+    private PlayingFragment playingFragment;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         play = findViewById(R.id.play);
         previous = findViewById(R.id.previous);
         next = findViewById(R.id.next);
+        playing = findViewById(R.id.playing);
         serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
@@ -101,9 +98,19 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
         isStoragePermissionGranted();
         getSongs();
+        playing.setOnClickListener(view -> {
+            if(!songNameTextView.getText().toString().equals("No music playing!")){
+                playingFragment = new PlayingFragment(artistTextView.getText().toString(),songNameTextView.getText().toString(),albumArtView.getBackground());
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                fragmentTransaction.add(R.id.fragment,playingFragment).addToBackStack("yes").commit();
+                playing.setVisibility(View.GONE);
+                isPlaying = true;
+            }
+        });
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment,new MainFragment(songManager)).commit();
+        fragmentTransaction.replace(R.id.fragment,new MainFragment(songManager)).addToBackStack("original").commit();
     }
 
     public  boolean isStoragePermissionGranted() {
@@ -156,6 +163,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     }
 
+    public Bitmap getAlbumArt(String album){
+        return songManager.getAlbumArt(album);
+    }
+
+    public MusicPlayer getMusicPlayer(){
+        return musicPlayer;
+    }
+
     private void bindService(){
         bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);
     }
@@ -166,10 +181,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
             unbindService(serviceConnection);
             bound = false;
         }
-    }
-
-    public Bitmap getAlbumArt(String album){
-        return songManager.getAlbumArt(album);
     }
 
     private void getSongs(){
@@ -243,6 +254,36 @@ public class MainActivity extends AppCompatActivity implements Callback {
             }
 
         }
+        Collections.sort(songs,new SortSongs("title"));
         songManager = new SongManager(songs,albumArt,artist);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(isPlaying){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.popBackStack("yes",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            playing.setVisibility(View.VISIBLE);
+            isPlaying = false;
+        }
+    }
+
+    private class SortSongs implements Comparator<Map<String, String>>
+    {
+        private final String key;
+
+
+        public SortSongs(String key) {
+            this.key = key;
+        }
+
+        public int compare(Map<String, String> first,
+                           Map<String, String> second)
+        {
+            // TODO: Null checking, both for maps and values
+            String firstValue = first.get(key);
+            String secondValue = second.get(key);
+            return firstValue.compareTo(secondValue);
+        }
     }
 }
