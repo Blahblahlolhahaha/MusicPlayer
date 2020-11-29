@@ -25,6 +25,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     private ArrayList<HashMap<String,String>> songs;
     private int current;
     private boolean shuffle;
+    private String repeat;
     private IBinder musicPlayerBinder = new MusicPlayerBinder();
     private Callback callback;
     private Bundle bundle;
@@ -35,6 +36,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         songs = (ArrayList<HashMap<String, String>>) original.clone();
         int start = bundle.getInt("start");
         shuffle = getSharedPreferences("settings",0).getBoolean("shuffle",false);
+        repeat = getSharedPreferences("settings",0).getString("repeat","no");
         current = start;
         if(shuffle){
             shuffle();
@@ -75,13 +77,16 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     public void next(){
         mediaPlayer.stop();
         mediaPlayer.release();
-        current++;
+        current = current == (songs.size()-1)? 0 : current + 1;
         createMusicPlayer();
     }
     public void previous(){
         mediaPlayer.stop();
         mediaPlayer.release();
         current--;
+        if(current<0){
+            current = songs.size() - 1;
+        }
         createMusicPlayer();
     }
     public void playAnotherSong(int position){
@@ -107,6 +112,26 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         return shuffle;
     }
 
+    public String setRepeat(){
+        SharedPreferences.Editor editor = getSharedPreferences("settings",0).edit();
+        switch (repeat){
+            case "no":
+                editor.putString("repeat","repeat");
+                repeat = "repeat";
+                break;
+            case "repeat":
+                editor.putString("repeat","track");
+                repeat = "track";
+                break;
+            case "track":
+                editor.putString("repeat","no");
+                repeat = "no";
+                break;
+        }
+        editor.apply();
+        return repeat;
+    }
+
     public void shuffle(){
         HashMap<String,String> current_song = songs.get(current);
         songs.remove(current);
@@ -121,7 +146,15 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         mediaPlayer.setOnPreparedListener(this);
         mediaPlayer.setOnCompletionListener(mediaPlayer1 -> {
             mediaPlayer1.release();
-            current++;
+            current = repeat.equals("track")? current:current + 1;
+            if(current == songs.size()){
+                if(repeat.equals("repeat")){
+                    current = 0;
+                }
+                else{
+                    stopSelf();
+                }
+            }
             createMusicPlayer();
         });
     }

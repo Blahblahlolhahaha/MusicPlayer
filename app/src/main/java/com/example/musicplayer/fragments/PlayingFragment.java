@@ -73,6 +73,16 @@ public class PlayingFragment extends Fragment {
                 Toast.makeText(getContext(),"Shuffle disabled",Toast.LENGTH_SHORT).show();
             }
         });
+        repeat.setOnClickListener(view1 -> {
+            switch (musicPlayer.setRepeat()){
+                case "no":
+                    Toast.makeText(getContext(),"Repeat disabled",Toast.LENGTH_SHORT).show();
+                case "repeat":
+                    Toast.makeText(getContext(),"Repeat enabled",Toast.LENGTH_SHORT).show();
+                case "track":
+                    Toast.makeText(getContext(),"Repeating current track",Toast.LENGTH_SHORT).show();
+            }
+        });
     }
     public void setSongInfo(String songName, String artist, Bitmap album){
         song = songName;
