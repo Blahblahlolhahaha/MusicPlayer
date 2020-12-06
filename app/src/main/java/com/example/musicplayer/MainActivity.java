@@ -9,7 +9,9 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaMetadata;
 import android.media.MediaMetadataRetriever;
+import android.media.session.MediaSession;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -46,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     private final String LOG_TAG = "Music Player";
     private MusicPlayer musicPlayer;
+    private MediaSession mediaSession;
     private boolean bound = false;
     private SongManager songManager;
     private TextView artistTextView,songNameTextView;
@@ -74,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 MusicPlayer.MusicPlayerBinder binder = (MusicPlayer.MusicPlayerBinder) iBinder;
                 musicPlayer = binder.getService();
                 musicPlayer.registerCallback(MainActivity.this);
+                mediaSession = musicPlayer.getMediaSession();
                 play.setOnClickListener(view -> {
                     if(musicPlayer.getPlayingStatus()){
                         play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.play));
@@ -143,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     public View.OnClickListener getOnclickListener(int position,ArrayList<HashMap<String,String>> songs){
         return view -> {
             if(musicPlayer!=null){
-                musicPlayer.playAnotherSong(position);
+                musicPlayer.reset(position);
             }
             else{
                 intent = new Intent(this, MusicPlayer.class);
@@ -162,6 +166,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
         Bitmap albumArt = getAlbumArt(album);
         albumArtView.setImageBitmap(albumArt);
         playingFragment.setSongInfo(songName,artist,albumArt);
+        mediaSession.setMetadata(new MediaMetadata.Builder()
+                .putString(MediaMetadata.METADATA_KEY_TITLE,songName)
+                .putString(MediaMetadata.METADATA_KEY_ARTIST,artist)
+                .putString(MediaMetadata.METADATA_KEY_ALBUM,album)
+                .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART,albumArt)
+                .build()
+        );
+        musicPlayer.createNotification();
     }
 
     public Bitmap getAlbumArt(String album){
