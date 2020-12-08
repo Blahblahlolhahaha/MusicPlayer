@@ -49,6 +49,12 @@ public class PlayingFragment extends Fragment {
         songNameTextView.setText(song);
         albumArtView.setImageBitmap(albumArt);
         MusicPlayer musicPlayer = ((MainActivity)getContext()).getMusicPlayer();
+        if(musicPlayer.getPlayingStatus()){
+            play.setBackground(ContextCompat.getDrawable(getContext().getApplicationContext(),R.drawable.pause));
+        }
+        else{
+            play.setBackground(ContextCompat.getDrawable(getContext().getApplicationContext(),R.drawable.play));
+        }
         play.setOnClickListener(view0 -> {
             if(musicPlayer.getPlayingStatus()){
                 play.setBackground(ContextCompat.getDrawable(getContext().getApplicationContext(),R.drawable.play));

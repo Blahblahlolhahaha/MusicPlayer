@@ -201,9 +201,9 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 .setOngoing(true)
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setStyle(mediaStyle)
-                .addAction(new Notification.Action(R.drawable.previous,"previous",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("previous",0),intent.setAction("action_previous"),PendingIntent.FLAG_UPDATE_CURRENT)))
-                .addAction(new Notification.Action(R.drawable.pause,"pause",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("pause",0),intent.setAction("action_pause"),PendingIntent.FLAG_UPDATE_CURRENT)))
-                .addAction(new Notification.Action(R.drawable.play,"play",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("play",0),intent.setAction("action_play"),PendingIntent.FLAG_UPDATE_CURRENT)))
+                .addAction(new Notification.Action(R.drawable.previousnoti,"previous",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("previous",0),intent.setAction("action_previous"),PendingIntent.FLAG_UPDATE_CURRENT)))
+                .addAction(new Notification.Action(R.drawable.pausenoti,"pause",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("pause",0),intent.setAction("action_pause"),PendingIntent.FLAG_UPDATE_CURRENT)))
+                .addAction(new Notification.Action(R.drawable.playnoti,"play",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("play",0),intent.setAction("action_play"),PendingIntent.FLAG_UPDATE_CURRENT)))
                 .addAction(new Notification.Action(R.drawable.nextnoti,"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("next",0),intent.setAction("action_next"),PendingIntent.FLAG_UPDATE_CURRENT)))
                 .build();
         notificationManager.notify(10000,notification);
