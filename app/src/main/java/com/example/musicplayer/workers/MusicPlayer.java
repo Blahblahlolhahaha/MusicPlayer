@@ -7,11 +7,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
-import android.media.MediaDescription;
 import android.media.MediaMetadata;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
@@ -20,7 +17,6 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.provider.MediaStore;
 
 import androidx.annotation.Nullable;
 
@@ -28,7 +24,6 @@ import com.example.musicplayer.R;
 import com.example.musicplayer.interfaces.Callback;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -193,6 +188,25 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         intent.putExtra("pause",1);
         intent.putExtra("play",2);
         intent.putExtra("next",3);
+        Notification.Action playAction = getPlayingStatus()? new Notification.Action.Builder(
+                Icon.createWithResource(getApplicationContext(),R.drawable.pause),
+                "pause",
+                PendingIntent.getService(
+                        getApplicationContext(),
+                        intent.getIntExtra("pause",0),
+                        intent.setAction("action_pause"),
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                )).build() :
+                new Notification.Action.Builder(
+                        Icon.createWithResource(getApplicationContext(),R.drawable.play),
+                        "play",
+                        PendingIntent.getService(
+                                getApplicationContext(),
+                                intent.getIntExtra("play",0),
+                                intent.setAction("action_play"),
+                                PendingIntent.FLAG_UPDATE_CURRENT
+                        )).build();
+
         Notification notification = new Notification.Builder(getApplicationContext(),"MusicPlayer")
                 .setContentTitle(mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE))
                 .setSubText(mediaMetadata.getString(MediaMetadata.METADATA_KEY_ARTIST))
@@ -201,10 +215,9 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 .setOngoing(true)
                 .setVisibility(Notification.VISIBILITY_PUBLIC)
                 .setStyle(mediaStyle)
-                .addAction(new Notification.Action(R.drawable.previousnoti,"previous",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("previous",0),intent.setAction("action_previous"),PendingIntent.FLAG_UPDATE_CURRENT)))
-                .addAction(new Notification.Action(R.drawable.pausenoti,"pause",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("pause",0),intent.setAction("action_pause"),PendingIntent.FLAG_UPDATE_CURRENT)))
-                .addAction(new Notification.Action(R.drawable.playnoti,"play",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("play",0),intent.setAction("action_play"),PendingIntent.FLAG_UPDATE_CURRENT)))
-                .addAction(new Notification.Action(R.drawable.nextnoti,"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("next",0),intent.setAction("action_next"),PendingIntent.FLAG_UPDATE_CURRENT)))
+                .addAction(new Notification.Action.Builder(Icon.createWithResource(getApplicationContext(),R.drawable.previous),"previous",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("previous",0),intent.setAction("action_previous"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
+                .addAction(playAction)
+                .addAction(new Notification.Action.Builder(Icon.createWithResource(getApplicationContext(),R.drawable.next),"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("next",0),intent.setAction("action_next"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
                 .build();
         notificationManager.notify(10000,notification);
     }
