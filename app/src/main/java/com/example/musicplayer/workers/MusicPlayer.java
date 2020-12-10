@@ -102,9 +102,13 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
     public void pause(){
         mediaPlayer.pause();
+        callback.setLogo(false);
+        createNotification();
     }
     public void play(){
         mediaPlayer.start();
+        callback.setLogo(true);
+        createNotification();
     }
     public void next(){
         mediaPlayer.stop();
@@ -285,9 +289,10 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     private void createNotificationChannel(){
         String channelName = "MusicPlayer";
         String description = "Play music!";
-        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        int importance = NotificationManager.IMPORTANCE_LOW;
         NotificationChannel notificationChannel  = new NotificationChannel(channelName,channelName,importance);
         notificationChannel.setDescription(description);
+        notificationChannel.setVibrationPattern(null);
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(notificationChannel);
     }

@@ -80,11 +80,9 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 mediaSession = musicPlayer.getMediaSession();
                 play.setOnClickListener(view -> {
                     if(musicPlayer.getPlayingStatus()){
-                        play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.play));
                         musicPlayer.pause();
                     }
                     else{
-                        play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
                         musicPlayer.play();
                     }
                 });
@@ -144,6 +142,16 @@ public class MainActivity extends AppCompatActivity implements Callback {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        if(isPlaying){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.popBackStack("yes",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            playing.setVisibility(View.VISIBLE);
+            isPlaying = false;
+        }
+    }
+
     public View.OnClickListener getOnclickListener(int position,ArrayList<HashMap<String,String>> songs){
         return view -> {
             if(musicPlayer!=null){
@@ -176,6 +184,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
         musicPlayer.createNotification();
     }
 
+    public void setLogo(boolean playing){
+        if(playing){
+            play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+        }
+        else{
+            play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.play));
+        }
+    }
     public Bitmap getAlbumArt(String album){
         return songManager.getAlbumArt(album);
     }
@@ -269,16 +285,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
         }
         Collections.sort(songs,new SortSongs("title"));
         songManager = new SongManager(songs,albumArt,artist);
-    }
-
-    @Override
-    public void onBackPressed() {
-        if(isPlaying){
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            fragmentManager.popBackStack("yes",FragmentManager.POP_BACK_STACK_INCLUSIVE);
-            playing.setVisibility(View.VISIBLE);
-            isPlaying = false;
-        }
     }
 
     private class SortSongs implements Comparator<Map<String, String>>
