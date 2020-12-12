@@ -1,5 +1,6 @@
 package com.example.musicplayer.workers;
 
+import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +15,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.text.Layout;
 import android.util.Log;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +24,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.solver.Cache;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.musicplayer.MainActivity;
@@ -32,7 +35,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder> {
+public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder>{
     private ArrayList<HashMap<String,String>> songs;
     private HashMap<String,Bitmap> albums;
     private HashMap<String,String> artists;
@@ -78,4 +81,5 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
             cardView.setOnClickListener(callback);
         }
     }
+
 }

@@ -9,9 +9,11 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.media.MediaMetadata;
 import android.media.MediaMetadataRetriever;
 import android.media.session.MediaSession;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -20,6 +22,7 @@ import com.example.musicplayer.fragments.PlayingFragment;
 import com.example.musicplayer.interfaces.Callback;
 import com.example.musicplayer.workers.MusicPlayer;
 import com.example.musicplayer.workers.SongManager;
+import com.jakewharton.disklrucache.DiskLruCache;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,17 +35,24 @@ import androidx.fragment.app.FragmentTransaction;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.LruCache;
 import android.view.View;
 
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.xml.transform.Result;
 
 public class MainActivity extends AppCompatActivity implements Callback {
 
@@ -59,6 +69,12 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private LinearLayoutCompat playing;
     private boolean isPlaying;
     private PlayingFragment playingFragment;
+    private LruCache<String,Bitmap> albumArtCache;
+    private DiskLruCache cache;
+    private final Object cacheLock = new Object();
+    private final int DISK_CACHE_SIZE = 1024*1024*100;
+    private final String directory = "Album Art";
+    private boolean initialising = true;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,6 +126,9 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 isPlaying = true;
             }
         });
+        File diskCache = new File(getCacheDir().getPath() + File.separator + directory);
+        new InitDiskCacheTask().execute(diskCache);
+        albumArtCache = new LruCache<>(1024*1024*100);
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragment,new MainFragment(songManager)).addToBackStack("original").commit();
@@ -272,16 +291,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
             song.put("duration",cursor.getString(6));
             song.put("year",cursor.getString(7));
             songs.add(song);
-            if(albumArt.get(cursor.getString(5)) == null){
-                MediaMetadataRetriever mmr =  new MediaMetadataRetriever();
-                mmr.setDataSource(cursor.getString(2));
-                byte[] picArray = mmr.getEmbeddedPicture();
-                if(picArray!=null){
-                    Bitmap art = BitmapFactory.decodeByteArray(picArray,0,picArray.length);
-                    albumArt.put(album.get(cursor.getString(5)),art);
-                }
-            }
-
         }
         Collections.sort(songs,new SortSongs("title"));
         songManager = new SongManager(songs,albumArt,artist);
@@ -303,6 +312,97 @@ public class MainActivity extends AppCompatActivity implements Callback {
             String firstValue = first.get(key);
             String secondValue = second.get(key);
             return firstValue.compareTo(secondValue);
+        }
+    }
+
+    private Bitmap getCache(String album){
+        synchronized (cacheLock){
+            while(initialising){
+                try{
+                    cacheLock.wait();
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+            if(cache != null){
+                try{
+                    DiskLruCache.Snapshot snapshot = cache.get(album);
+                    if(snapshot == null){return null;}
+                    InputStream bitmapInput = snapshot.getInputStream(0);
+                    Bitmap albumArt = BitmapFactory.decodeStream(bitmapInput);
+                    return albumArt;
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+    }
+
+    private void storeCache(Bitmap albumArt,String album){
+        synchronized (cacheLock){
+            while(initialising){
+                try{
+                    cacheLock.wait();
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+        }
+        try{
+            DiskLruCache.Editor editor = cache.edit(album);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            albumArt.compress(Bitmap.CompressFormat.PNG,100,baos);
+            editor.newOutputStream(0).write(baos.toByteArray());
+            baos.close();
+            editor.commit();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+
+    }
+
+    class InitDiskCacheTask extends AsyncTask<File,Void,Void>{
+
+        @Override
+        protected Void doInBackground(File... files) {
+            synchronized (cacheLock){
+                File cacheDir = files[0];
+                try {
+                    cache = DiskLruCache.open(cacheDir,1,songManager.getAlbum().size(),DISK_CACHE_SIZE);
+                    cacheLock.notifyAll();
+                    initialising = false;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+    }
+
+    public class BitmapWorkerTask extends AsyncTask<HashMap<String,String>,Void,Void>{
+        @Override
+        protected Void doInBackground(HashMap<String,String>... songs) {
+            for (HashMap<String,String> song:songs
+                 ) {
+                String album = song.get("album");
+                Bitmap albumArt = getCache(album);
+                if(albumArt == null){
+                    MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+                    mediaMetadataRetriever.setDataSource(song.get("data"));
+                    byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
+                    if(albumBytes == null){
+                        albumArt =  BitmapFactory.decodeResource(getResources(),R.drawable.placeholder);
+                        albumArtCache.put(album,albumArt);
+                        storeCache(albumArt,song.get("album"));
+                    }
+                    albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
+                    albumArtCache.put(album,albumArt);
+                    storeCache(albumArt,song.get("album"));
+                }
+                albumArtCache.put(album,albumArt);
+            }
+            return null;
         }
     }
 }
