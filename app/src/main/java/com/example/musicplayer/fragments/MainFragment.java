@@ -24,10 +24,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MainFragment extends Fragment {
-    private SongManager songManager;
+    private ArrayList<HashMap<String,String>> songs;
 
-    public MainFragment(SongManager songManager){
-        this.songManager = songManager;
+    public MainFragment(ArrayList<HashMap<String,String>> songs){
+        this.songs = songs;
     }
     @Nullable
     @Override
@@ -42,7 +42,7 @@ public class MainFragment extends Fragment {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         songList.setLayoutManager(linearLayoutManager);
         songList.setHasFixedSize(true);
-        SongAdapter songAdapter = new SongAdapter(songManager,getContext());
+        SongAdapter songAdapter = new SongAdapter(songs,getContext());
         songList.setAdapter(songAdapter);
     }
 }

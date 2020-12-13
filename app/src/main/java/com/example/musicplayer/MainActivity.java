@@ -20,6 +20,7 @@ import android.os.Bundle;
 import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
 import com.example.musicplayer.interfaces.Callback;
+import com.example.musicplayer.workers.CacheWorker;
 import com.example.musicplayer.workers.MusicPlayer;
 import com.example.musicplayer.workers.SongManager;
 import com.jakewharton.disklrucache.DiskLruCache;
@@ -60,7 +61,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private MusicPlayer musicPlayer;
     private MediaSession mediaSession;
     private boolean bound = false;
-    private SongManager songManager;
     private TextView artistTextView,songNameTextView;
     private ImageView albumArtView;
     private Intent intent;
@@ -69,12 +69,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private LinearLayoutCompat playing;
     private boolean isPlaying;
     private PlayingFragment playingFragment;
-    private LruCache<String,Bitmap> albumArtCache;
-    private DiskLruCache cache;
-    private final Object cacheLock = new Object();
-    private final int DISK_CACHE_SIZE = 1024*1024*100;
-    private final String directory = "Album Art";
-    private boolean initialising = true;
+    private CacheWorker cacheWorker;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
             }
         };
         isStoragePermissionGranted();
-        getSongs();
+        cacheWorker = new CacheWorker(getApplicationContext(),getCacheDir()+File.separator+"albumArt");
         playing.setOnClickListener(view -> {
             if(!songNameTextView.getText().toString().equals("No music playing!")){
                 FragmentManager fragmentManager = getSupportFragmentManager();
@@ -126,12 +121,9 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 isPlaying = true;
             }
         });
-        File diskCache = new File(getCacheDir().getPath() + File.separator + directory);
-        new InitDiskCacheTask().execute(diskCache);
-        albumArtCache = new LruCache<>(1024*1024*100);
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment,new MainFragment(songManager)).addToBackStack("original").commit();
+        fragmentTransaction.replace(R.id.fragment,new MainFragment(cacheWorker.getSongsMap())).addToBackStack("original").commit();
     }
 
     public  boolean isStoragePermissionGranted() {
@@ -212,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         }
     }
     public Bitmap getAlbumArt(String album){
-        return songManager.getAlbumArt(album);
+        return cacheWorker.getAlbumArt(album);
     }
 
     public MusicPlayer getMusicPlayer(){
@@ -228,181 +220,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
             musicPlayer.registerCallback(null);
             unbindService(serviceConnection);
             bound = false;
-        }
-    }
-
-    private void getSongs(){
-        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-        String[] projection = {
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.ARTIST_ID,
-                MediaStore.Audio.Media.ALBUM_ID,
-                MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.YEAR
-        };
-        String[] projection1 = {
-                MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM
-        };
-        String[] projection2 = {
-                MediaStore.Audio.Artists._ID, MediaStore.Audio.Artists.ARTIST
-        };
-        Cursor cursor = getApplicationContext().getContentResolver().query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                selection,
-                null,
-                null
-        );
-        Cursor c = getApplicationContext().getContentResolver().query(
-                MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
-                projection1,
-                null,
-                null,
-                null
-        );
-        Cursor cc = getApplicationContext().getContentResolver().query(
-                MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
-                projection2,
-                null,
-                null,
-                null
-        );
-        ArrayList<HashMap<String,String>> songs = new ArrayList<>();
-        HashMap<String,Bitmap> albumArt = new HashMap<>();
-        HashMap<String,String> artist = new HashMap<>();
-        HashMap<String,String> album = new HashMap<>();
-        while(cc.moveToNext()){
-            artist.put(cc.getString(0),cc.getString(1));
-        }
-        while(c.moveToNext()){
-            album.put(c.getString(0),c.getString(1));
-        }
-        while(cursor.moveToNext()){
-            HashMap<String,String> song = new HashMap<>();
-            song.put("ID",cursor.getString(0));
-            song.put("title",cursor.getString(1));
-            song.put("data",cursor.getString(2));
-            song.put("display_name",cursor.getString(3));
-            song.put("artist",artist.get(cursor.getString(4)));
-            song.put("album",album.get(cursor.getString(5)));
-            song.put("duration",cursor.getString(6));
-            song.put("year",cursor.getString(7));
-            songs.add(song);
-        }
-        Collections.sort(songs,new SortSongs("title"));
-        songManager = new SongManager(songs,albumArt,artist);
-    }
-
-    private class SortSongs implements Comparator<Map<String, String>>
-    {
-        private final String key;
-
-
-        public SortSongs(String key) {
-            this.key = key;
-        }
-
-        public int compare(Map<String, String> first,
-                           Map<String, String> second)
-        {
-            // TODO: Null checking, both for maps and values
-            String firstValue = first.get(key);
-            String secondValue = second.get(key);
-            return firstValue.compareTo(secondValue);
-        }
-    }
-
-    private Bitmap getCache(String album){
-        synchronized (cacheLock){
-            while(initialising){
-                try{
-                    cacheLock.wait();
-                }catch (InterruptedException e){
-                    e.printStackTrace();
-                }
-            }
-            if(cache != null){
-                try{
-                    DiskLruCache.Snapshot snapshot = cache.get(album);
-                    if(snapshot == null){return null;}
-                    InputStream bitmapInput = snapshot.getInputStream(0);
-                    Bitmap albumArt = BitmapFactory.decodeStream(bitmapInput);
-                    return albumArt;
-                }catch(IOException e){
-                    e.printStackTrace();
-                }
-            }
-            return null;
-        }
-    }
-
-    private void storeCache(Bitmap albumArt,String album){
-        synchronized (cacheLock){
-            while(initialising){
-                try{
-                    cacheLock.wait();
-                }catch (InterruptedException e){
-                    e.printStackTrace();
-                }
-            }
-        }
-        try{
-            DiskLruCache.Editor editor = cache.edit(album);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            albumArt.compress(Bitmap.CompressFormat.PNG,100,baos);
-            editor.newOutputStream(0).write(baos.toByteArray());
-            baos.close();
-            editor.commit();
-        }catch(IOException e){
-            e.printStackTrace();
-        }
-
-    }
-
-    class InitDiskCacheTask extends AsyncTask<File,Void,Void>{
-
-        @Override
-        protected Void doInBackground(File... files) {
-            synchronized (cacheLock){
-                File cacheDir = files[0];
-                try {
-                    cache = DiskLruCache.open(cacheDir,1,songManager.getAlbum().size(),DISK_CACHE_SIZE);
-                    cacheLock.notifyAll();
-                    initialising = false;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            return null;
-        }
-    }
-
-    public class BitmapWorkerTask extends AsyncTask<HashMap<String,String>,Void,Void>{
-        @Override
-        protected Void doInBackground(HashMap<String,String>... songs) {
-            for (HashMap<String,String> song:songs
-                 ) {
-                String album = song.get("album");
-                Bitmap albumArt = getCache(album);
-                if(albumArt == null){
-                    MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-                    mediaMetadataRetriever.setDataSource(song.get("data"));
-                    byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
-                    if(albumBytes == null){
-                        albumArt =  BitmapFactory.decodeResource(getResources(),R.drawable.placeholder);
-                        albumArtCache.put(album,albumArt);
-                        storeCache(albumArt,song.get("album"));
-                    }
-                    albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
-                    albumArtCache.put(album,albumArt);
-                    storeCache(albumArt,song.get("album"));
-                }
-                albumArtCache.put(album,albumArt);
-            }
-            return null;
         }
     }
 }

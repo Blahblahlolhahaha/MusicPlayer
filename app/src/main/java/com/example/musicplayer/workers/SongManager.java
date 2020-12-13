@@ -12,10 +12,10 @@ import java.util.HashMap;
 
 public class SongManager {
     private ArrayList<HashMap<String,String>> songs;
-    private HashMap<String,Bitmap> album;
+    private HashMap<String,String> album;
     private HashMap<String,String> artist;
 
-    public SongManager(ArrayList<HashMap<String,String>> s, HashMap<String, Bitmap> a, HashMap<String,String> b){
+    public SongManager(ArrayList<HashMap<String,String>> s, HashMap<String, String> a, HashMap<String,String> b){
         songs = s;
         album = a;
         artist = b;
@@ -25,15 +25,11 @@ public class SongManager {
         return songs;
     }
 
-    public HashMap<String, Bitmap> getAlbum() {
+    public HashMap<String, String> getAlbum() {
         return album;
     }
 
     public HashMap<String, String> getArtist() {
         return artist;
-    }
-
-    public Bitmap getAlbumArt(String albumName){
-        return album.get(albumName);
     }
 }

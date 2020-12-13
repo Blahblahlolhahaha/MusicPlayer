@@ -37,13 +37,9 @@ import java.util.HashMap;
 
 public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder>{
     private ArrayList<HashMap<String,String>> songs;
-    private HashMap<String,Bitmap> albums;
-    private HashMap<String,String> artists;
     private Context context;
-    public SongAdapter(SongManager s, Context context){
-        songs = s.getSongs();
-        albums = s.getAlbum();
-        artists = s.getArtist();
+    public SongAdapter(ArrayList<HashMap<String,String>> songs, Context context){
+        this.songs =  songs;
         this.context = context;
     }
     @NonNull
@@ -59,7 +55,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         ImageView albumArt = holder.cardView.findViewById(R.id.album_art);
         TextView artist = holder.cardView.findViewById(R.id.artist);
         TextView songName = holder.cardView.findViewById(R.id.song_name);
-        Bitmap album_art = albums.get(songs.get(position).get("album"));
+        Bitmap album_art = ((MainActivity)context).getAlbumArt(songs.get(position).get("album"));
         albumArt.setImageBitmap(album_art);
         artist.setText(songs.get(position).get("artist"));
         songName.setText(songs.get(position).get("title"));
