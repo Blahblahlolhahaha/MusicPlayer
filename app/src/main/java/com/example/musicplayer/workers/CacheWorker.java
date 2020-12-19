@@ -45,7 +45,7 @@ public class CacheWorker {
         new BitmapWorkerTask().execute(songManager.getSongs());
     }
 
-    public HashMap<String, String> getAlbumMap(){
+    public HashMap<String, Object> getAlbumMap(){
         return songManager.getAlbum();
     }
 
@@ -99,6 +99,7 @@ public class CacheWorker {
                     if(snapshot == null){return null;}
                     InputStream bitmapInput = snapshot.getInputStream(0);
                     Bitmap albumArt = BitmapFactory.decodeStream(bitmapInput);
+                    bitmapInput.close();
                     return albumArt;
                 }catch(IOException e){
                     e.printStackTrace();
@@ -196,7 +197,7 @@ public class CacheWorker {
         );
         ArrayList<HashMap<String,String>> songs = new ArrayList<>();
         HashMap<String,String> artist = new HashMap<>();
-        HashMap<String,String> albums = new HashMap<>();
+        HashMap<String,Object> albums = new HashMap<>();
         while(cc.moveToNext()){
             artist.put(cc.getString(0),cc.getString(1));
         }
