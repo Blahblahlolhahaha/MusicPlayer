@@ -12,10 +12,10 @@ import java.util.HashMap;
 
 public class SongManager {
     private ArrayList<HashMap<String,String>> songs;
-    private HashMap<String,Object> album;
+    private HashMap<String,String> album;
     private HashMap<String,String> artist;
 
-    public SongManager(ArrayList<HashMap<String,String>> s, HashMap<String, Object> a, HashMap<String,String> b){
+    public SongManager(ArrayList<HashMap<String,String>> s, HashMap<String, String> a, HashMap<String,String> b){
         songs = s;
         album = a;
         artist = b;
@@ -25,7 +25,7 @@ public class SongManager {
         return songs;
     }
 
-    public HashMap<String, Object> getAlbum() {
+    public HashMap<String, String> getAlbum() {
         return album;
     }
 

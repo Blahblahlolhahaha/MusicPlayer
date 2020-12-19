@@ -6,24 +6,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.media.MediaMetadata;
-import android.media.MediaMetadataRetriever;
 import android.media.session.MediaSession;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 
 import com.example.musicplayer.fragments.MainFragment;
+import com.example.musicplayer.fragments.SongFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
 import com.example.musicplayer.interfaces.Callback;
 import com.example.musicplayer.workers.CacheWorker;
 import com.example.musicplayer.workers.MusicPlayer;
-import com.example.musicplayer.workers.SongManager;
-import com.jakewharton.disklrucache.DiskLruCache;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -34,26 +28,16 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.os.IBinder;
-import android.provider.MediaStore;
 import android.util.Log;
-import android.util.LruCache;
 import android.view.View;
 
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Map;
-
-import javax.xml.transform.Result;
 
 public class MainActivity extends AppCompatActivity implements Callback {
 
@@ -123,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         });
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment,new MainFragment(cacheWorker.getSongsMap())).addToBackStack("original").commit();
+        fragmentTransaction.replace(R.id.fragment,new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap())).addToBackStack("original").commit();
     }
 
     public  boolean isStoragePermissionGranted() {

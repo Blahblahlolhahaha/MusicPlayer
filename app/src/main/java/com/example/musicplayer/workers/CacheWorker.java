@@ -45,7 +45,7 @@ public class CacheWorker {
         new BitmapWorkerTask().execute(songManager.getSongs());
     }
 
-    public HashMap<String, Object> getAlbumMap(){
+    public HashMap<String, String> getAlbumMap(){
         return songManager.getAlbum();
     }
 
@@ -149,7 +149,9 @@ public class CacheWorker {
                             albumArtCache.put(album,albumArt);
                             storeCache(albumArt,song.get("album"));
                         }
+                        mediaMetadataRetriever.close();
                     }
+
                     albumArtCache.put(album,albumArt);
                 }
             }
@@ -197,7 +199,7 @@ public class CacheWorker {
         );
         ArrayList<HashMap<String,String>> songs = new ArrayList<>();
         HashMap<String,String> artist = new HashMap<>();
-        HashMap<String,Object> albums = new HashMap<>();
+        HashMap<String,String> albums = new HashMap<>();
         while(cc.moveToNext()){
             artist.put(cc.getString(0),cc.getString(1));
         }
@@ -217,6 +219,9 @@ public class CacheWorker {
             songs.add(song);
         }
         Collections.sort(songs,new SortSongs("title"));
+        c.close();
+        cc.close();
+        cursor.close();
         songManager = new SongManager(songs,albums,artist);
     }
 
