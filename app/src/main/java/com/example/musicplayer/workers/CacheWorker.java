@@ -168,10 +168,11 @@ public class CacheWorker {
                 MediaStore.Audio.Media.ARTIST_ID,
                 MediaStore.Audio.Media.ALBUM_ID,
                 MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.YEAR
+                MediaStore.Audio.Media.YEAR,
+                MediaStore.Audio.Media.TRACK
         };
         String[] projection1 = {
-                MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM
+                MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM,MediaStore.Audio.Albums.ARTIST
         };
         String[] projection2 = {
                 MediaStore.Audio.Artists._ID, MediaStore.Audio.Artists.ARTIST
@@ -183,14 +184,14 @@ public class CacheWorker {
                 null,
                 null
         );
-        Cursor c = context.getApplicationContext().getContentResolver().query(
+        Cursor albumCursor = context.getApplicationContext().getContentResolver().query(
                 MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI,
                 projection1,
                 null,
                 null,
                 null
         );
-        Cursor cc = context.getApplicationContext().getContentResolver().query(
+        Cursor artistCursor = context.getApplicationContext().getContentResolver().query(
                 MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
                 projection2,
                 null,
@@ -200,11 +201,11 @@ public class CacheWorker {
         ArrayList<HashMap<String,String>> songs = new ArrayList<>();
         HashMap<String,String> artist = new HashMap<>();
         HashMap<String,String> albums = new HashMap<>();
-        while(cc.moveToNext()){
-            artist.put(cc.getString(0),cc.getString(1));
+        while(artistCursor.moveToNext()){
+            artist.put(artistCursor.getString(0),artistCursor.getString(1));
         }
-        while(c.moveToNext()){
-            albums.put(c.getString(0),c.getString(1));
+        while(albumCursor.moveToNext()){
+            albums.put(albumCursor.getString(0),String.format("%s,%s",albumCursor.getString(1),albumCursor.getString(2)));
         }
         while(cursor.moveToNext()){
             HashMap<String,String> song = new HashMap<>();
@@ -216,11 +217,21 @@ public class CacheWorker {
             song.put("album",cursor.getString(5));
             song.put("duration",cursor.getString(6));
             song.put("year",cursor.getString(7));
+            String track = cursor.getString(8);
+            if(track.length() == 4){
+                String disk = track.substring(0,1);
+                String trackNum = String.valueOf(Integer.parseInt(track.substring(1)));
+                song.put("disk",disk);
+                song.put("track",trackNum);
+            }
+            else{
+                song.put("track",track);
+            }
             songs.add(song);
         }
         Collections.sort(songs,new SortSongs("title"));
-        c.close();
-        cc.close();
+        albumCursor.close();
+        artistCursor.close();
         cursor.close();
         songManager = new SongManager(songs,albums,artist);
     }

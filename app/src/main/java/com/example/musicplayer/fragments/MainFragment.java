@@ -32,8 +32,6 @@ public class MainFragment extends Fragment {
         this.songs = songs;
         this.album = album;
         this.artist = artist;
-        fragment_list.add(new SongFragment(songs));
-        fragment_list.add(new SongFragment(songs));
     }
 
     @Nullable
@@ -60,7 +58,14 @@ public class MainFragment extends Fragment {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            return fragment_list.get(position);
+            switch(position){
+                case 0:
+                    return new SongFragment(songs);
+                case 1:
+                    return new AlbumFragment(album);
+                default:
+                    return new SongFragment(songs);
+            }
         }
 
         @Override

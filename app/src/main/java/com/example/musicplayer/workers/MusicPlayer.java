@@ -223,6 +223,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 .addAction(playAction)
                 .addAction(new Notification.Action.Builder(Icon.createWithResource(getApplicationContext(),R.drawable.next),"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("next",0),intent.setAction("action_next"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
                 .build();
+
         notificationManager.notify(10000,notification);
     }
 

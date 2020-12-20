@@ -163,6 +163,12 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
+    public View.OnClickListener getAlbumOnClickListener(String id){
+        return view -> {
+
+        };
+    }
+
     public void callback(String songName, String artist, String album){
         songNameTextView.setText(songName);
         artistTextView.setText(artist);

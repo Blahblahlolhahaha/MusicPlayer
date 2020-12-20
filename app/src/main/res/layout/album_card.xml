@@ -1,25 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--TODO
+REMOVE WHITESPACE
+-->
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:layout_width="wrap_content" android:layout_height="235dp"
     android:layout_marginRight="10dp">
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:background="@color/black"
         android:padding="10dp">
         <ImageView
             android:id="@+id/album_art"
             android:layout_width="170dp"
             android:layout_height="170dp"
-            android:background="@drawable/placeholder"
+            android:background="@color/black"
             android:layout_marginBottom="10dp"
             android:layout_weight="1"/>
         <TextView
             android:id="@+id/album_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
+            android:textSize="15sp"
             android:text="dfgfdjknvfd"
+            android:textColor="@color/white"
             android:textAlignment="center"/>
         <TextView
             android:id="@+id/artist"
@@ -27,6 +32,8 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:text="dfgfdjknvfd"
+            android:layout_weight="1"
+            android:textColor="@color/white"
             android:textAlignment="center"/>
     </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.cardview.widget.CardView>
