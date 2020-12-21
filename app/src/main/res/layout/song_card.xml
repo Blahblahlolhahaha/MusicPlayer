@@ -15,7 +15,7 @@
             android:layout_marginEnd="10dp"
             android:background="@color/black"/>
         <androidx.appcompat.widget.LinearLayoutCompat
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:gravity="center_vertical">
@@ -23,6 +23,7 @@
                 android:id="@+id/song_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:maxWidth="280dp"
                 android:text="fffffff"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -31,11 +32,22 @@
                 android:id="@+id/artist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:maxWidth="280dp"
                 android:text="vdfvv"
                 android:textSize="10dp"
                 android:textColor="@color/white"/>
         </androidx.appcompat.widget.LinearLayoutCompat>
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/duration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="14:10"
+            android:textSize="12dp"
+            android:layout_gravity="end|center_vertical"
+            android:textAlignment="viewEnd"
+            android:textColor="@color/white"/>
     </androidx.appcompat.widget.LinearLayoutCompat>
+
 
 
 
