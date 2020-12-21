@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.icu.text.Edits;
 import android.media.MediaMetadataRetriever;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
@@ -21,7 +22,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class CacheWorker {
     private LruCache<String, Bitmap> albumArtCache;
@@ -59,6 +62,17 @@ public class CacheWorker {
 
     public Bitmap getAlbumArt(String albumID){
         return albumArtCache.get(albumID);
+    }
+
+    public ArrayList<HashMap<String,String>> getAlbumSongs(String albumID){
+        ArrayList<HashMap<String,String>> albumSongs = new ArrayList<>();
+        for (HashMap<String,String> song:
+             getSongsMap()) {
+            if(song.get("album").equals(albumID)){
+                albumSongs.add(song);
+            }
+        }
+        return albumSongs;
     }
 
     private void storeCache(Bitmap albumArt,String album){
@@ -215,7 +229,7 @@ public class CacheWorker {
             song.put("display_name",cursor.getString(3));
             song.put("artist",artist.get(cursor.getString(4)));
             song.put("album",cursor.getString(5));
-            song.put("duration",cursor.getString(6));
+            song.put("duration",formatDuration(Long.parseLong(cursor.getString(6))));
             song.put("year",cursor.getString(7));
             String track = cursor.getString(8);
             if(track.length() == 4){
@@ -253,5 +267,13 @@ public class CacheWorker {
             String secondValue = second.get(key);
             return firstValue.compareTo(secondValue);
         }
+    }
+
+    private String formatDuration(long duration) {
+        long minutes = TimeUnit.MINUTES.convert(duration, TimeUnit.MILLISECONDS);
+        long seconds = TimeUnit.SECONDS.convert(duration, TimeUnit.MILLISECONDS)
+                - minutes * TimeUnit.SECONDS.convert(1, TimeUnit.MINUTES);
+
+        return String.format("%02d:%02d", minutes, seconds);
     }
 }

@@ -52,13 +52,16 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull SongViewHolder holder, int position) {
+        HashMap<String,String> song = songs.get(position);
         ImageView albumArt = holder.cardView.findViewById(R.id.album_art);
         TextView artist = holder.cardView.findViewById(R.id.artist);
         TextView songName = holder.cardView.findViewById(R.id.song_name);
+        TextView duration = holder.cardView.findViewById(R.id.duration);
         Bitmap album_art = ((MainActivity)context).getAlbumArt(songs.get(position).get("album"));
         albumArt.setImageBitmap(album_art);
-        artist.setText(songs.get(position).get("artist"));
-        songName.setText(songs.get(position).get("title"));
+        artist.setText(song.get("artist"));
+        songName.setText(song.get("title"));
+        duration.setText(song.get("duration"));
         holder.bind(((MainActivity)context).getOnclickListener(position,songs));
     }
 

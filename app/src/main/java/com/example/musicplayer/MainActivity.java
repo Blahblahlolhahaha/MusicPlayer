@@ -12,6 +12,7 @@ import android.media.session.MediaSession;
 import android.os.Build;
 import android.os.Bundle;
 
+import com.example.musicplayer.fragments.AlbumSongsFragment;
 import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.fragments.SongFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
@@ -51,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ImageButton play,previous,next;
     private ServiceConnection serviceConnection;
     private LinearLayoutCompat playing;
-    private boolean isPlaying;
+    private boolean isPlaying,album;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
     @Override
@@ -145,8 +146,13 @@ public class MainActivity extends AppCompatActivity implements Callback {
             playing.setVisibility(View.VISIBLE);
             isPlaying = false;
         }
+        else if(album){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.popBackStack("album",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            album = false;
+        }
     }
-
+    
     public View.OnClickListener getOnclickListener(int position,ArrayList<HashMap<String,String>> songs){
         return view -> {
             if(musicPlayer!=null){
@@ -165,7 +171,13 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public View.OnClickListener getAlbumOnClickListener(String id){
         return view -> {
-
+            ArrayList<HashMap<String,String>> albumsSongs = cacheWorker.getAlbumSongs(id);
+            String[] albumInfo = cacheWorker.getAlbumMap().get(id).split(",");
+            AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(albumsSongs,getAlbumArt(id),albumInfo[0],albumInfo[1]);
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.fragment,albumSongsFragment).addToBackStack("album").commit();
+            album = true;
         };
     }
 
