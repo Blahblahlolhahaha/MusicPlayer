@@ -156,7 +156,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     public View.OnClickListener getOnclickListener(int position,ArrayList<HashMap<String,String>> songs){
         return view -> {
             if(musicPlayer!=null){
-                musicPlayer.reset(position);
+                musicPlayer.reset(position,songs);
             }
             else{
                 intent = new Intent(this, MusicPlayer.class);

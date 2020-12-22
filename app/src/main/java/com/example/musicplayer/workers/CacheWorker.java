@@ -233,9 +233,9 @@ public class CacheWorker {
             song.put("year",cursor.getString(7));
             String track = cursor.getString(8);
             if(track.length() == 4){
-                String disk = track.substring(0,1);
+                String disc = track.substring(0,1);
                 String trackNum = String.valueOf(Integer.parseInt(track.substring(1)));
-                song.put("disk",disk);
+                song.put("disc",disc);
                 song.put("track",trackNum);
             }
             else{

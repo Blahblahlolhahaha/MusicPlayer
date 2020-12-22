@@ -213,6 +213,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
 
         Notification notification = new Notification.Builder(getApplicationContext(),"MusicPlayer")
                 .setContentTitle(mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE))
+                .setContentTitle(mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE))
                 .setSubText(mediaMetadata.getString(MediaMetadata.METADATA_KEY_ARTIST))
                 .setLargeIcon(mediaMetadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART))
                 .setSmallIcon(Icon.createWithResource(getApplicationContext(),R.drawable.ic_launcher_background))
@@ -245,7 +246,8 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
             createMusicPlayer();
         });
     }
-    public void reset(int position){
+    public void reset(int position,ArrayList<HashMap<String, String>> newSongs){
+        original = (ArrayList<HashMap<String, String>>) newSongs.clone();
         songs = (ArrayList<HashMap<String, String>>) original.clone();
         playAnotherSong(position);
         if(shuffle){
