@@ -11,7 +11,6 @@ Its a sad music player that i made to learn a lot of android stuff which include
 * a lot of data storage ideas
 
 ## Known Bugs/ Issues
-* App crashes when selecting an album which contains disc
 * Media Notification will not go away after killing app
 * Play/pause sometimes do not go right
 * App startup is very slow
