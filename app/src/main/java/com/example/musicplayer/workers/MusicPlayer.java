@@ -17,6 +17,7 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.widget.ScrollView;
 
 import androidx.annotation.Nullable;
 

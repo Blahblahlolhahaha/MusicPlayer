@@ -36,12 +36,13 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             Collections.sort(songs,new SortSongs("disc"));
             songs = splitByDisk(songs);
             gotDisc = true;
-            currentDisk = 1;
+            currentDisk = 0;
         }
         else{
             Collections.sort(songs,new SortSongs("track"));
         }
         this.songs = songs;
+
     }
 
     @Override
@@ -67,7 +68,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (holder.getItemViewType() == 1){
-            HashMap<String,String> song = songs.get(position - currentDisk);
+            HashMap<String,String> song = songs.get(position);
             TextView track = ((SongViewHolder) holder).cardView.findViewById(R.id.track);
             TextView artist = ((SongViewHolder) holder).cardView.findViewById(R.id.artist);
             TextView songName = (((SongViewHolder) holder)).cardView.findViewById(R.id.song_name);
@@ -83,7 +84,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
         else{
             TextView disk = ((DiskViewHolder)holder).textView;
-            String diskText = "Disc " + songs.get(position + currentDisk).get("disc");
+            String diskText = "Disc " + songs.get(position + disk_position.indexOf(position) + 1).get("disc");
             disk.setText(diskText);
         }
 
@@ -91,7 +92,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
     @Override
     public int getItemCount() {
-        return songs.size() + disk_position.size();
+        return songs.size();
     }
 
     public static class SongViewHolder extends RecyclerView.ViewHolder{
@@ -121,6 +122,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             if(i + 1 != songs.size()){
                 if(!song.get("disc").equals(songs.get(i+1).get("disc"))){
                     Collections.sort(diskTracks,new SortSongs("track"));
+
                     songsss.addAll(diskTracks);
                     diskTracks.clear();
                     disk_position.add(disk_position.size() + 1  + i);
@@ -135,6 +137,12 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             gotDisc = false;
             currentDisk = 0;
             disk_position.clear();
+        }
+        else{
+            for (int i:
+                 disk_position) {
+                songsss.add(i,null);
+            }
         }
         return songsss;
     }
