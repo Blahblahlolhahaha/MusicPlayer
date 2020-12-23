@@ -40,6 +40,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     private Callback callback;
     private Bundle bundle;
     private MediaSession mediaSession;
+    private NotificationManager notificationManager;
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent.getAction()!=null){
@@ -184,7 +185,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
 
     public void createNotification(){
-        NotificationManager notificationManager = getSystemService(NotificationManager.class);
+        notificationManager = getSystemService(NotificationManager.class);
         MediaController mediaController = mediaSession.getController();
         MediaMetadata mediaMetadata = mediaController.getMetadata();
         Notification.MediaStyle mediaStyle = new Notification.MediaStyle().setMediaSession(mediaSession.getSessionToken());
@@ -299,5 +300,11 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         notificationChannel.setVibrationPattern(null);
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(notificationChannel);
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        notificationManager.cancel(10000);
+        super.onTaskRemoved(rootIntent);
     }
 }
