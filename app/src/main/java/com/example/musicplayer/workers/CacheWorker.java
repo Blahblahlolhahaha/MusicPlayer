@@ -17,7 +17,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -87,12 +89,15 @@ public class CacheWorker {
         }
         try{
             DiskLruCache.Editor editor = cache.edit(album);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            albumArt.compress(Bitmap.CompressFormat.PNG,100,baos);
+
+            ByteBuffer byteBuffer =  ByteBuffer.allocate(albumArt.getByteCount());
+            albumArt.copyPixelsToBuffer(byteBuffer);
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(editor.newOutputStream(0));
-            objectOutputStream.writeObject(baos.toByteArray());
-            baos.close();
+            byte[] yes = byteBuffer.array();
+            objectOutputStream.writeObject(yes);
             editor.commit();
+            byteBuffer.clear();
+
         }catch(IOException e){
             e.printStackTrace();
         }
@@ -111,10 +116,11 @@ public class CacheWorker {
                 try{
                     DiskLruCache.Snapshot snapshot = cache.get(album);
                     if(snapshot == null){return null;}
-                    InputStream bitmapInput = snapshot.getInputStream(0);
-                    Bitmap albumArt = BitmapFactory.decodeStream(bitmapInput);
-                    bitmapInput.close();
-                    return albumArt;
+                    byte[] yes = new byte[(int) snapshot.getLength(0)];
+                    ObjectInputStream objectInputStream = new ObjectInputStream(snapshot.getInputStream(0));
+                    objectInputStream.read(yes);
+                    objectInputStream.close();
+                    return BitmapFactory.decodeByteArray(yes,0,yes.length);
                 }catch(IOException e){
                     e.printStackTrace();
                 }

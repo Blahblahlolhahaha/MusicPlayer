@@ -42,7 +42,6 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             Collections.sort(songs,new SortSongs("track"));
         }
         this.songs = songs;
-
     }
 
     @Override
@@ -112,7 +111,6 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             textView = t;
         }
     }
-
     private ArrayList<HashMap<String,String>> splitByDisk(ArrayList<HashMap<String,String>> songs){
         ArrayList<HashMap<String,String>> diskTracks = new ArrayList<>();
         ArrayList<HashMap<String,String>> songsss = new ArrayList<>();
