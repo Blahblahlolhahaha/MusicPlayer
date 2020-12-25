@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class SongFragment extends Fragment {
-    private ArrayList<HashMap<String,String>> songs;
+    private final ArrayList<HashMap<String,String>> songs;
 
     public SongFragment(ArrayList<HashMap<String,String>> songs){
         this.songs = songs;

@@ -20,14 +20,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MainFragment extends Fragment {
-    private ArrayList<HashMap<String,String>> songs;
-    private HashMap<String,String> album;
+    private final ArrayList<HashMap<String,String>> songs;
+    private final HashMap<String,String> album;
     private HashMap<String,String> artist;
-    private String[] tabNames = {"Songs","Albums","Artists"};
-    private Adapter adapter;
-    private ViewPager2 viewPager2;
-    private TabLayout tabLayout;
-    private ArrayList<Fragment> fragment_list = new ArrayList<>();
+    private final String[] tabNames = {"Songs","Albums","Artists"};
     public MainFragment(ArrayList<HashMap<String,String>> songs, HashMap<String,String> album, HashMap<String,String> artist){
         this.songs = songs;
         this.album = album;
@@ -42,12 +38,12 @@ public class MainFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        adapter = new Adapter(this);
-        viewPager2 = view.findViewById(R.id.pager);
-        tabLayout = view.findViewById(R.id.tabs);
+        Adapter adapter = new Adapter(this);
+        ViewPager2 viewPager2 = view.findViewById(R.id.pager);
+        TabLayout tabLayout = view.findViewById(R.id.tabs);
         tabLayout.setTabTextColors(Color.parseColor("#FFFFFF"),Color.parseColor("#FFFFFF"));
         viewPager2.setAdapter(adapter);
-        new TabLayoutMediator(tabLayout,viewPager2,((tab, position) -> {tab.setText(tabNames[position]);})).attach();
+        new TabLayoutMediator(tabLayout, viewPager2,((tab, position) -> {tab.setText(tabNames[position]);})).attach();
     }
 
     private class Adapter extends FragmentStateAdapter{

@@ -25,25 +25,21 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class CacheWorker {
-    private LruCache<String, Bitmap> albumArtCache;
+    private final LruCache<String, Bitmap> albumArtCache;
     private DiskLruCache cache;
     private final Object cacheLock = new Object();
-    private final int DISK_CACHE_SIZE = 1024*1024*100;
-    private String directory;
     private boolean initialising = true;
-    private int albumSize;
     private SongManager songManager;
     private Context context;
     public CacheWorker(Context context,String cacheDirectory){
         this.context = context;
         getSongs();
-        this.albumSize = songManager.getAlbum().size();
-        this.directory = cacheDirectory;
-        File diskCache = new File(directory);
+        File diskCache = new File(cacheDirectory);
         new InitDiskCacheTask().execute(diskCache);
         albumArtCache = new LruCache<>(1024*1024*100);
         this.context = context;
@@ -136,7 +132,8 @@ public class CacheWorker {
             synchronized (cacheLock){
                 File cacheDir = files[0];
                 try {
-                    cache = DiskLruCache.open(cacheDir,1,1,DISK_CACHE_SIZE);
+                    int DISK_CACHE_SIZE = 1024 * 1024 * 100;
+                    cache = DiskLruCache.open(cacheDir,1,1, DISK_CACHE_SIZE);
                     cacheLock.notifyAll();
                     initialising = false;
                 } catch (IOException e) {
@@ -148,33 +145,37 @@ public class CacheWorker {
     }
 
     private class BitmapWorkerTask extends AsyncTask<ArrayList<HashMap<String,String>>,Void,Void>{
+        @SafeVarargs
         @Override
-        protected Void doInBackground(ArrayList<HashMap<String,String>>... songs) {
-            for (HashMap<String,String> song:songs[0]
-            ) {
-                String album = song.get("album");
-                if(albumArtCache.get(album) == null){
-                    Bitmap albumArt = getCache(album);
-                    if(albumArt == null){
-                        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-                        mediaMetadataRetriever.setDataSource(song.get("data"));
-                        byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
-                        if(albumBytes == null){
-                            albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-                            albumArtCache.put(album,albumArt);
-                            storeCache(albumArt,song.get("album"));
+        protected final Void doInBackground(ArrayList<HashMap<String, String>>... songs) {
+            if(songs != null){
+                for (HashMap<String,String> song:songs[0]
+                ) {
+                    String album = song.get("album");
+                    if(albumArtCache.get(album) == null){
+                        Bitmap albumArt = getCache(album);
+                        if(albumArt == null){
+                            MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+                            mediaMetadataRetriever.setDataSource(song.get("data"));
+                            byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
+                            if(albumBytes == null){
+                                albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
+                                albumArtCache.put(album,albumArt);
+                                storeCache(albumArt,song.get("album"));
+                            }
+                            else{
+                                albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
+                                albumArtCache.put(album,albumArt);
+                                storeCache(albumArt,song.get("album"));
+                            }
+                            mediaMetadataRetriever.close();
                         }
-                        else{
-                            albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
-                            albumArtCache.put(album,albumArt);
-                            storeCache(albumArt,song.get("album"));
-                        }
-                        mediaMetadataRetriever.close();
-                    }
 
-                    albumArtCache.put(album,albumArt);
+                        albumArtCache.put(album,albumArt);
+                    }
                 }
             }
+
             return null;
         }
     }
@@ -280,6 +281,6 @@ public class CacheWorker {
         long seconds = TimeUnit.SECONDS.convert(duration, TimeUnit.MILLISECONDS)
                 - minutes * TimeUnit.SECONDS.convert(1, TimeUnit.MINUTES);
 
-        return String.format("%02d:%02d", minutes, seconds);
+        return String.format(Locale.ENGLISH,"%02d:%02d", minutes, seconds);
     }
 }

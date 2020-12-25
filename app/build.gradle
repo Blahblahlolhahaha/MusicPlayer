@@ -41,4 +41,5 @@ dependencies {
     implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever-native:1.0.15'
     implementation 'com.jakewharton:disklrucache:2.0.2'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
+    implementation group: 'androidx.media', name: 'media', version: '1.2.1'
 }

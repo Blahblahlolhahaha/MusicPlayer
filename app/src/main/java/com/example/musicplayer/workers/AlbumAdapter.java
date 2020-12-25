@@ -18,9 +18,9 @@ import com.example.musicplayer.R;
 import java.util.HashMap;
 
 public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHolder> {
-    private HashMap<String,String> albums;
-    private String[] albumIDs;
-    private Context context;
+    private final HashMap<String,String> albums;
+    private final String[] albumIDs;
+    private final Context context;
 
     public AlbumAdapter(HashMap<String,String> albums, Context context){
         this.albums = albums;

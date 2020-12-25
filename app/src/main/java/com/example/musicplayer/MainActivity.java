@@ -7,19 +7,17 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.media.MediaMetadata;
-import android.media.session.MediaSession;
-import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-import com.example.musicplayer.fragments.AlbumSongsFragment;
-import com.example.musicplayer.fragments.MainFragment;
-import com.example.musicplayer.fragments.SongFragment;
-import com.example.musicplayer.fragments.PlayingFragment;
-import com.example.musicplayer.interfaces.Callback;
-import com.example.musicplayer.workers.CacheWorker;
-import com.example.musicplayer.workers.MusicPlayer;
-
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.LinearLayoutCompat;
@@ -28,23 +26,23 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import android.os.IBinder;
-import android.util.Log;
-import android.view.View;
-
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
+import com.example.musicplayer.fragments.AlbumSongsFragment;
+import com.example.musicplayer.fragments.MainFragment;
+import com.example.musicplayer.fragments.PlayingFragment;
+import com.example.musicplayer.interfaces.Callback;
+import com.example.musicplayer.workers.CacheWorker;
+import com.example.musicplayer.workers.MusicPlayer;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements Callback {
 
     private final String LOG_TAG = "Music Player";
     private MusicPlayer musicPlayer;
-    private MediaSession mediaSession;
+    private MediaSessionCompat mediaSession;
     private boolean bound = false;
     private TextView artistTextView,songNameTextView;
     private ImageView albumArtView;
@@ -82,12 +80,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
                         musicPlayer.play();
                     }
                 });
-                previous.setOnClickListener(view -> {
-                    musicPlayer.previous();
-                });
-                next.setOnClickListener(view -> {
-                    musicPlayer.next();
-                });
+                previous.setOnClickListener(view -> musicPlayer.previous());
+                next.setOnClickListener(view ->musicPlayer.next());
             }
 
             @Override
@@ -111,27 +105,19 @@ public class MainActivity extends AppCompatActivity implements Callback {
         fragmentTransaction.replace(R.id.fragment,new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap())).addToBackStack("original").commit();
     }
 
-    public  boolean isStoragePermissionGranted() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED) {
-                Log.v(LOG_TAG,"Permission is granted");
-                return true;
-            } else {
-
-                Log.v(LOG_TAG,"Permission is revoked");
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-                return false;
-            }
-        }
-        else {
+    public void isStoragePermissionGranted() {
+        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED) {
             Log.v(LOG_TAG,"Permission is granted");
-            return true;
+        } else {
+
+            Log.v(LOG_TAG,"Permission is revoked");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
             Log.v(LOG_TAG,"Permission: "+permissions[0]+ "was "+grantResults[0]);
@@ -172,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     public View.OnClickListener getAlbumOnClickListener(String id){
         return view -> {
             ArrayList<HashMap<String,String>> albumsSongs = cacheWorker.getAlbumSongs(id);
-            String[] albumInfo = cacheWorker.getAlbumMap().get(id).split(",");
+            String[] albumInfo = Objects.requireNonNull(cacheWorker.getAlbumMap().get(id)).split(",");
             AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(albumsSongs,getAlbumArt(id),albumInfo[0],albumInfo[1]);
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -187,11 +173,11 @@ public class MainActivity extends AppCompatActivity implements Callback {
         Bitmap albumArt = getAlbumArt(album);
         albumArtView.setImageBitmap(albumArt);
         playingFragment.setSongInfo(songName,artist,albumArt);
-        mediaSession.setMetadata(new MediaMetadata.Builder()
-                .putString(MediaMetadata.METADATA_KEY_TITLE,songName)
-                .putString(MediaMetadata.METADATA_KEY_ARTIST,artist)
-                .putString(MediaMetadata.METADATA_KEY_ALBUM,album)
-                .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART,albumArt)
+        mediaSession.setMetadata(new MediaMetadataCompat.Builder()
+                .putString(MediaMetadataCompat.METADATA_KEY_TITLE,songName)
+                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST,artist)
+                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM,album)
+                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,albumArt)
                 .build()
         );
         musicPlayer.createNotification();

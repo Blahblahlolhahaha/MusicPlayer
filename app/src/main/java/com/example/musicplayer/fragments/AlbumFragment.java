@@ -17,7 +17,7 @@ import com.example.musicplayer.workers.AlbumAdapter;
 import java.util.HashMap;
 
 public class AlbumFragment extends Fragment {
-    private HashMap<String,String> albums;
+    private final HashMap<String,String> albums;
 
     public AlbumFragment(HashMap<String,String>albums){
         this.albums = albums;
