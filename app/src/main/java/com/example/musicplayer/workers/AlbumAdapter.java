@@ -15,17 +15,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHolder> {
-    private final HashMap<String,String> albums;
-    private final String[] albumIDs;
+    private final ArrayList<HashMap<String,String>> albums;
     private final Context context;
 
-    public AlbumAdapter(HashMap<String,String> albums, Context context){
+    public AlbumAdapter(ArrayList<HashMap<String,String>> albums, Context context){
         this.albums = albums;
         this.context = context;
-        albumIDs = albums.keySet().toArray(new String[0]);
     }
 
     @NonNull
@@ -38,21 +37,21 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
 
     @Override
     public void onBindViewHolder(@NonNull AlbumViewHolder holder, int position) {
+        HashMap<String,String> currentAlbum = albums.get(position);
         ImageView albumArt = holder.cardView.findViewById(R.id.album_art);
         TextView album = holder.cardView.findViewById(R.id.album_name);
         TextView artist = holder.cardView.findViewById(R.id.artist);
-        String albumID = albumIDs[position];
-        String[] albumInfo = albums.get(albumID).split(",");
-        album.setText(albumInfo[0]);
-        artist.setText(albumInfo[1]);
+        String albumID = currentAlbum.get("ID");
+        album.setText(currentAlbum.get("name"));
+        artist.setText(currentAlbum.get("artist"));
         Bitmap album_art = ((MainActivity) context).getAlbumArt(albumID);
         albumArt.setImageBitmap(album_art);
-        holder.bind(((MainActivity)context).getAlbumOnClickListener(albumID));
+        holder.bind(((MainActivity)context).getAlbumOnClickListener(currentAlbum));
     }
 
     @Override
     public int getItemCount() {
-        return albumIDs.length;
+        return albums.size();
     }
 
     public static class AlbumViewHolder extends RecyclerView.ViewHolder {

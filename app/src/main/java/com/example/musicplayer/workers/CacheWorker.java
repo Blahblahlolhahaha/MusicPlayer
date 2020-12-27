@@ -46,11 +46,11 @@ public class CacheWorker {
         new BitmapWorkerTask().execute(songManager.getSongs());
     }
 
-    public HashMap<String, String> getAlbumMap(){
+    public ArrayList<HashMap<String,String>> getAlbumMap(){
         return songManager.getAlbum();
     }
 
-    public HashMap<String, String> getArtistMap(){
+    public ArrayList<HashMap<String, String>> getArtistMap(){
         return songManager.getArtist();
     }
 
@@ -196,7 +196,7 @@ public class CacheWorker {
                 MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM,MediaStore.Audio.Albums.ARTIST
         };
         String[] projection2 = {
-                MediaStore.Audio.Artists._ID, MediaStore.Audio.Artists.ARTIST
+                MediaStore.Audio.Artists._ID, MediaStore.Audio.Artists.ARTIST,MediaStore.Audio.Artists.NUMBER_OF_TRACKS, MediaStore.Audio.Artists.NUMBER_OF_ALBUMS
         };
         Cursor cursor = context.getApplicationContext().getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -220,13 +220,22 @@ public class CacheWorker {
                 null
         );
         ArrayList<HashMap<String,String>> songs = new ArrayList<>();
-        HashMap<String,String> artist = new HashMap<>();
-        HashMap<String,String> albums = new HashMap<>();
+        ArrayList<HashMap<String,String>> artists = new ArrayList<>();
+        ArrayList<HashMap<String,String>> albums = new ArrayList<>();
         while(artistCursor.moveToNext()){
-            artist.put(artistCursor.getString(0),artistCursor.getString(1));
+            HashMap<String,String> artist = new HashMap<>();
+            artist.put("ID",artistCursor.getString(0));
+            artist.put("name",artistCursor.getString(1));
+            artist.put("tracks",artistCursor.getString(2));
+            artist.put("albums",artistCursor.getString(3));
+            artists.add(artist);
         }
         while(albumCursor.moveToNext()){
-            albums.put(albumCursor.getString(0),String.format("%s,%s",albumCursor.getString(1),albumCursor.getString(2)));
+            HashMap<String,String> album = new HashMap<>();
+            album.put("ID",albumCursor.getString(0));
+            album.put("name",albumCursor.getString(1));
+            album.put("artist",albumCursor.getString(2));
+            albums.add(album);
         }
         while(cursor.moveToNext()){
             HashMap<String,String> song = new HashMap<>();
@@ -234,7 +243,13 @@ public class CacheWorker {
             song.put("title",cursor.getString(1));
             song.put("data",cursor.getString(2));
             song.put("display_name",cursor.getString(3));
-            song.put("artist",artist.get(cursor.getString(4)));
+            String ID = cursor.getString(4);
+            for(HashMap<String,String>artist
+                    :artists){
+                if(artist.get("ID").equals(ID)){
+                    song.put("artist",artist.get("name"));
+                }
+            }
             song.put("album",cursor.getString(5));
             song.put("duration",formatDuration(Long.parseLong(cursor.getString(6))));
             song.put("year",cursor.getString(7));
@@ -254,7 +269,7 @@ public class CacheWorker {
         albumCursor.close();
         artistCursor.close();
         cursor.close();
-        songManager = new SongManager(songs,albums,artist);
+        songManager = new SongManager(songs,albums,artists);
     }
 
     private class SortSongs implements Comparator<Map<String, String>>

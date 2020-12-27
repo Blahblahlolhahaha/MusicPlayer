@@ -21,10 +21,10 @@ import java.util.HashMap;
 
 public class MainFragment extends Fragment {
     private final ArrayList<HashMap<String,String>> songs;
-    private final HashMap<String,String> album;
-    private HashMap<String,String> artist;
+    private final ArrayList<HashMap<String,String>> album;
+    private ArrayList<HashMap<String,String>> artist;
     private final String[] tabNames = {"Songs","Albums","Artists"};
-    public MainFragment(ArrayList<HashMap<String,String>> songs, HashMap<String,String> album, HashMap<String,String> artist){
+    public MainFragment(ArrayList<HashMap<String,String>> songs, ArrayList<HashMap<String,String>> album, ArrayList<HashMap<String,String>> artist){
         this.songs = songs;
         this.album = album;
         this.artist = artist;

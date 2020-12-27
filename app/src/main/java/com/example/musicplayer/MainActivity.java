@@ -155,11 +155,11 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
-    public View.OnClickListener getAlbumOnClickListener(String id){
+    public View.OnClickListener getAlbumOnClickListener(final HashMap<String,String> albumMap){
         return view -> {
+            String id = albumMap.get("ID");
             ArrayList<HashMap<String,String>> albumsSongs = cacheWorker.getAlbumSongs(id);
-            String[] albumInfo = Objects.requireNonNull(cacheWorker.getAlbumMap().get(id)).split(",");
-            AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(albumsSongs,getAlbumArt(id),albumInfo[0],albumInfo[1]);
+            AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(albumsSongs,getAlbumArt(id),albumMap.get("name"),albumMap.get("artist"));
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.fragment,albumSongsFragment).addToBackStack("album").commit();
