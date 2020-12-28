@@ -68,7 +68,7 @@ public class MainFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return 2;
+            return 3;
         }
     }
 }

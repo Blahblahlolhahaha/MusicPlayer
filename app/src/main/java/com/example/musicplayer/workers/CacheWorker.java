@@ -73,10 +73,18 @@ public class CacheWorker {
 
     public ArrayList<HashMap<String,String>> getArtistSongs(String artist){
         ArrayList<HashMap<String,String>> artistSongs = new ArrayList<>();
+        ArrayList<HashMap<String,String>> artistAlbums = new ArrayList<>();
+        ArrayList<HashMap<String,String>> albums = getAlbumMap();
         for (HashMap<String,String> song:
                 getSongsMap()) {
             if(song.get("artist").equals(artist)){
                 artistSongs.add(song);
+                for (HashMap<String,String> album:
+                        albums) {
+                    if(album.get("ID").equals(song.get("album")) && !artistAlbums.contains(album)){
+                        artistAlbums.add(album);
+                    }
+                }
             }
         }
         return artistSongs;

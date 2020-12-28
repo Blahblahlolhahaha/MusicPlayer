@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
 }
+apply plugin: 'kotlin-android'
 
 android {
     compileSdkVersion 29
@@ -42,4 +43,10 @@ dependencies {
     implementation 'com.jakewharton:disklrucache:2.0.2'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.1.0'
     implementation group: 'androidx.media', name: 'media', version: '1.2.1'
+    implementation "androidx.core:core-ktx:+"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+}
+repositories {
+    maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
+    mavenCentral()
 }

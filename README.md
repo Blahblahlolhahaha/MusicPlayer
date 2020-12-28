@@ -16,8 +16,9 @@ Its a sad music player that i made to learn a lot of android stuff which include
     * Album art loading slow
 
 ## TODO
-* Add playlists and artist tab
+* Add playlists
 * Optimise code
 * Add seekbar in noti/playing fragment
+* Improve UI
 
 If u guys see any bugs that are not listed here, feel free to open an issue :D

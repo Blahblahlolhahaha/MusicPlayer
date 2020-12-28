@@ -16,7 +16,7 @@ import kotlin.collections.HashMap
 class ArtistsAdapter(val artists: ArrayList<HashMap<String,String>>, val context: Context): RecyclerView.Adapter<ArtistsAdapter.ArtistViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArtistViewHolder {
-        val cardView: CardView = LayoutInflater.from(parent.context).inflate(R.layout.artist_card,parent) as CardView
+        val cardView: CardView = LayoutInflater.from(parent.context).inflate(R.layout.artist_card,parent,false) as CardView
         return ArtistViewHolder(cardView)
     }
 

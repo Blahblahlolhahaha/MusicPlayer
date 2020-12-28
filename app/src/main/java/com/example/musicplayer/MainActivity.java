@@ -27,6 +27,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.musicplayer.fragments.AlbumSongsFragment;
+import com.example.musicplayer.fragments.ArtistFragment;
 import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
 import com.example.musicplayer.interfaces.Callback;
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ImageButton play,previous,next;
     private ServiceConnection serviceConnection;
     private LinearLayoutCompat playing;
-    private boolean isPlaying,album;
+    private boolean isPlaying,album,artist;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
     @Override
@@ -137,6 +138,11 @@ public class MainActivity extends AppCompatActivity implements Callback {
             fragmentManager.popBackStack("album",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             album = false;
         }
+        else if(artist){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.popBackStack("artist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            artist = false;
+        }
     }
     
     public View.OnClickListener getOnclickListener(int position,ArrayList<HashMap<String,String>> songs){
@@ -155,9 +161,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
-    public View.OnClickListener getArtistOnClickListener(String artist){
+    public View.OnClickListener getArtistOnClickListener(String artistName){
         return view -> {
-
+            ArrayList<HashMap<String,String>> songs = cacheWorker.getArtistSongs(artistName);
+            ArrayList<HashMap<String,String>> albums = cacheWorker.getArtistAlbums(artistName);
+            ArtistFragment artistFragment = new ArtistFragment(songs,albums); FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.fragment,artistFragment).addToBackStack("artist").commit();
+            artist = true;
         };
     }
 
