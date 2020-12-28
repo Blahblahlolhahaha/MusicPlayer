@@ -61,6 +61,37 @@ public class CacheWorker {
     public Bitmap getAlbumArt(String albumID){
         return albumArtCache.get(albumID);
     }
+    public Bitmap getArtistAlbumArt(String artist){
+        for (HashMap<String,String> song:
+                getSongsMap()) {
+            if(song.get("artist").equals(artist)){
+                return albumArtCache.get(song.get("album"));
+            }
+        }
+        return BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
+    }
+
+    public ArrayList<HashMap<String,String>> getArtistSongs(String artist){
+        ArrayList<HashMap<String,String>> artistSongs = new ArrayList<>();
+        for (HashMap<String,String> song:
+                getSongsMap()) {
+            if(song.get("artist").equals(artist)){
+                artistSongs.add(song);
+            }
+        }
+        return artistSongs;
+    }
+
+    public ArrayList<HashMap<String,String>> getArtistAlbums(String artist){
+        ArrayList<HashMap<String,String>> artistAlbums = new ArrayList<>();
+        for (HashMap<String,String> album:
+                getAlbumMap()) {
+            if(album.get("artist").equals(artist)){
+                artistAlbums.add(album);
+            }
+        }
+        return artistAlbums;
+    }
 
     public ArrayList<HashMap<String,String>> getAlbumSongs(String albumID){
         ArrayList<HashMap<String,String>> albumSongs = new ArrayList<>();

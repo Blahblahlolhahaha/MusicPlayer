@@ -59,6 +59,8 @@ public class MainFragment extends Fragment {
                     return new SongFragment(songs);
                 case 1:
                     return new AlbumFragment(album);
+                case 2:
+                    return new ArtistsFragment(artist);
                 default:
                     return new SongFragment(songs);
             }

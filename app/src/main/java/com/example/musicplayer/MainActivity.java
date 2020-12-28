@@ -155,6 +155,12 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
+    public View.OnClickListener getArtistOnClickListener(String artist){
+        return view -> {
+
+        };
+    }
+
     public View.OnClickListener getAlbumOnClickListener(final HashMap<String,String> albumMap){
         return view -> {
             String id = albumMap.get("ID");
@@ -166,6 +172,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
             album = true;
         };
     }
+
+
 
     public void callback(String songName, String artist, String album){
         songNameTextView.setText(songName);
@@ -193,6 +201,10 @@ public class MainActivity extends AppCompatActivity implements Callback {
     }
     public Bitmap getAlbumArt(String album){
         return cacheWorker.getAlbumArt(album);
+    }
+
+    public Bitmap getArtistAlbumArt(String artist){
+        return cacheWorker.getArtistAlbumArt(artist);
     }
 
     public MusicPlayer getMusicPlayer(){
