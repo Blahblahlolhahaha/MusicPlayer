@@ -14,6 +14,7 @@ Its a sad music player that i made to learn a lot of android stuff which include
 * Play/pause sometimes do not go right
 * App startup is very slow
     * Album art loading slow
+* Artist tab causes app to crash if changed to that tab when app is just started
 
 ## TODO
 * Add playlists
