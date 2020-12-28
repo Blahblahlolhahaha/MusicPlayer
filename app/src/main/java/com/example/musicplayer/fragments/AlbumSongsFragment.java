@@ -24,14 +24,12 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class AlbumSongsFragment extends Fragment {
-    private ArrayList<HashMap<String,String>> songs;
-    private Bitmap albumArt;
-    private String albumName,artist;
-    private ImageView albumArtView;
-    private FloatingActionButton play;
-    private CoordinatorLayout coordinatorLayout;
+    private final ArrayList<HashMap<String,String>> songs;
+    private final Bitmap albumArt;
+    private final String albumName,artist;
 
     public AlbumSongsFragment(ArrayList<HashMap<String,String>> songs, Bitmap albumArt, String albumName, String artist){
         this.songs = songs;
@@ -51,19 +49,20 @@ public class AlbumSongsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         MainActivity mainActivity = (MainActivity) getContext();
         Toolbar toolbar = view.findViewById(R.id.toolbar);
-        play = view.findViewById(R.id.play);
+        FloatingActionButton play = view.findViewById(R.id.play);
         RecyclerView recyclerView = view.findViewById(R.id.songs);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(linearLayoutManager);
         AlbumSongAdapter songAdapter = new AlbumSongAdapter(songs,artist,mainActivity);
         recyclerView.setAdapter(songAdapter);
-        albumArtView = view.findViewById(R.id.album_art);
+        ImageView albumArtView = view.findViewById(R.id.album_art);
         albumArtView.setImageBitmap(albumArt);
         toolbar.setTitle(albumName);
         toolbar.setSubtitle(artist);
+        assert mainActivity != null;
         mainActivity.setSupportActionBar(toolbar);
-        mainActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(mainActivity.getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         mainActivity.getSupportActionBar().setDisplayShowHomeEnabled(true);
         play.setOnClickListener(mainActivity.getOnclickListener(0,songs));
     }

@@ -7,19 +7,20 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.drawable.Icon;
 import android.media.MediaMetadata;
 import android.media.MediaPlayer;
-import android.media.session.MediaController;
-import android.media.session.MediaSession;
-import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.widget.ScrollView;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.media.app.NotificationCompat;
 
 import com.example.musicplayer.R;
 import com.example.musicplayer.interfaces.Callback;
@@ -29,19 +30,18 @@ import java.util.Collections;
 import java.util.HashMap;
 
 public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListener {
-    private static final String ACTION_PLAY = "com.example.action.PLAY";
     private MediaPlayer mediaPlayer = null;
     private ArrayList<HashMap<String,String>> original;
     private ArrayList<HashMap<String,String>> songs;
     private int current;
     private boolean shuffle;
     private String repeat;
-    private IBinder musicPlayerBinder = new MusicPlayerBinder();
+    private final IBinder musicPlayerBinder = new MusicPlayerBinder();
     private Callback callback;
-    private Bundle bundle;
-    private MediaSession mediaSession;
-    private NotificationManager notificationManager;
+    private MediaSessionCompat mediaSession;
+    private NotificationManagerCompat notificationManager;
     @Override
+    @SuppressWarnings("unchecked")
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent.getAction()!=null){
             switch (intent.getAction()){
@@ -61,8 +61,8 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
             }
         }
         else{
-            mediaSession = new MediaSession(getApplicationContext(),"mediaSession");
-            bundle = intent.getExtras();
+            mediaSession = new MediaSessionCompat(getApplicationContext(),"mediaSession");
+            Bundle bundle = intent.getExtras();
             original = (ArrayList<HashMap<String, String>>) bundle.get("songs");
             songs = (ArrayList<HashMap<String, String>>) original.clone();
             int start = bundle.getInt("start");
@@ -106,11 +106,21 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         mediaPlayer.pause();
         callback.setLogo(false);
         createNotification();
+        mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                .setState(PlaybackStateCompat.STATE_PAUSED,0,1.0f)
+                .build()
+        );
     }
     public void play(){
         mediaPlayer.start();
         callback.setLogo(true);
         createNotification();
+        mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                .setState(PlaybackStateCompat.STATE_PLAYING,0,1.0f)
+                .build()
+        );
     }
     public void next(){
         mediaPlayer.stop();
@@ -133,7 +143,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         current = position;
         createMusicPlayer();
     }
-
+    @SuppressWarnings("unchecked")
     public boolean setShuffle() {
         SharedPreferences.Editor editor = getSharedPreferences("settings",0).edit();
         editor.putBoolean("shuffle", !shuffle);
@@ -150,7 +160,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         return shuffle;
     }
 
-    public MediaSession getMediaSession(){
+    public MediaSessionCompat getMediaSession(){
         return mediaSession;
     }
 
@@ -185,17 +195,17 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
 
     public void createNotification(){
-        notificationManager = getSystemService(NotificationManager.class);
-        MediaController mediaController = mediaSession.getController();
-        MediaMetadata mediaMetadata = mediaController.getMetadata();
-        Notification.MediaStyle mediaStyle = new Notification.MediaStyle().setMediaSession(mediaSession.getSessionToken());
+        notificationManager = NotificationManagerCompat.from(this);
+        MediaControllerCompat mediaController = mediaSession.getController();
+        MediaMetadataCompat mediaMetadata = mediaController.getMetadata();
+        NotificationCompat.MediaStyle mediaStyle = new NotificationCompat.MediaStyle().setMediaSession(mediaSession.getSessionToken());
         Intent intent = new Intent( getApplicationContext(), MusicPlayer.class );
         intent.putExtra("previous",0);
         intent.putExtra("pause",1);
         intent.putExtra("play",2);
         intent.putExtra("next",3);
-        Notification.Action playAction = getPlayingStatus()? new Notification.Action.Builder(
-                Icon.createWithResource(getApplicationContext(),R.drawable.pause),
+        androidx.core.app.NotificationCompat.Action playAction = getPlayingStatus()? new androidx.core.app.NotificationCompat.Action.Builder(
+                R.drawable.pause,
                 "pause",
                 PendingIntent.getService(
                         getApplicationContext(),
@@ -203,8 +213,8 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                         intent.setAction("action_pause"),
                         PendingIntent.FLAG_UPDATE_CURRENT
                 )).build() :
-                new Notification.Action.Builder(
-                        Icon.createWithResource(getApplicationContext(),R.drawable.play),
+                new androidx.core.app.NotificationCompat.Action.Builder(
+                        R.drawable.play,
                         "play",
                         PendingIntent.getService(
                                 getApplicationContext(),
@@ -213,18 +223,18 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                                 PendingIntent.FLAG_UPDATE_CURRENT
                         )).build();
 
-        Notification notification = new Notification.Builder(getApplicationContext(),"MusicPlayer")
+        Notification notification = new androidx.core.app.NotificationCompat.Builder(getApplicationContext(),"MusicPlayer")
                 .setContentTitle(mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE))
                 .setContentTitle(mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE))
                 .setSubText(mediaMetadata.getString(MediaMetadata.METADATA_KEY_ARTIST))
                 .setLargeIcon(mediaMetadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART))
-                .setSmallIcon(Icon.createWithResource(getApplicationContext(),R.drawable.ic_launcher_background))
+                .setSmallIcon(R.drawable.ic_launcher_background)
                 .setOngoing(true)
-                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setVisibility(androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC)
                 .setStyle(mediaStyle)
-                .addAction(new Notification.Action.Builder(Icon.createWithResource(getApplicationContext(),R.drawable.previous),"previous",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("previous",0),intent.setAction("action_previous"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
+                .addAction(new androidx.core.app.NotificationCompat.Action.Builder(R.drawable.previous,"previous",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("previous",0),intent.setAction("action_previous"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
                 .addAction(playAction)
-                .addAction(new Notification.Action.Builder(Icon.createWithResource(getApplicationContext(),R.drawable.next),"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("next",0),intent.setAction("action_next"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
+                .addAction(new androidx.core.app.NotificationCompat.Action.Builder(R.drawable.next,"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("next",0),intent.setAction("action_next"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
                 .build();
 
         notificationManager.notify(10000,notification);
@@ -248,6 +258,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
             createMusicPlayer();
         });
     }
+    @SuppressWarnings("unchecked")
     public void reset(int position,ArrayList<HashMap<String, String>> newSongs){
         original = (ArrayList<HashMap<String, String>>) newSongs.clone();
         songs = (ArrayList<HashMap<String, String>>) original.clone();
@@ -257,24 +268,34 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         }
     }
     private void configureMediaSession(){
-        mediaSession.setCallback(new MediaSession.Callback() {
+        mediaSession.setCallback(new MediaSessionCompat.Callback() {
+
             @Override
             public void onSeekTo(long pos) {
                 mediaPlayer.seekTo((int)pos);
             }
 
             @Override
+            public void onPlay() {
+                super.onPlay();
+                play();
+            }
+
+            @Override
             public void onSkipToPrevious() {
+                super.onSkipToPrevious();
                 previous();
             }
 
             @Override
             public void onSkipToNext() {
+                super.onSkipToNext();
                  next();
             }
 
             @Override
             public void onPause() {
+                super.onPause();
                 pause();
             }
 
@@ -284,11 +305,12 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 mediaPlayer.release();
             }
         });
-        mediaSession.setPlaybackState(new PlaybackState.Builder()
-                .setActions(PlaybackState.ACTION_PLAY|PlaybackState.ACTION_PAUSE|PlaybackState.ACTION_SKIP_TO_NEXT|PlaybackState.ACTION_SKIP_TO_PREVIOUS)
-                .setState(PlaybackState.STATE_PLAYING,0,1.0f)
+        mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                .setState(PlaybackStateCompat.STATE_STOPPED,0,1.0f)
                 .build()
         );
+
         mediaSession.setActive(true);
     }
     private void createNotificationChannel(){

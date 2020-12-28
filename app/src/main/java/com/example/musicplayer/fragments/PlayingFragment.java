@@ -24,7 +24,7 @@ import com.example.musicplayer.workers.MusicPlayer;
 public class PlayingFragment extends Fragment {
     private TextView artistTextView,songNameTextView;
     private ImageView albumArtView;
-    private ImageButton play,previous,next,repeat,shuffle;
+    private ImageButton play;
     private String artist,song;
     private Bitmap albumArt;
 
@@ -41,10 +41,10 @@ public class PlayingFragment extends Fragment {
         songNameTextView = view.findViewById(R.id.playing_song_name);
         albumArtView = view.findViewById(R.id.playing_album_art);
         play = view.findViewById(R.id.playing_play);
-        previous = view.findViewById(R.id.playing_previous);
-        next = view.findViewById(R.id.playing_next);
-        repeat = view.findViewById(R.id.playing_repeat);
-        shuffle = view.findViewById(R.id.playing_shuffle);
+        ImageButton previous = view.findViewById(R.id.playing_previous);
+        ImageButton next = view.findViewById(R.id.playing_next);
+        ImageButton repeat = view.findViewById(R.id.playing_repeat);
+        ImageButton shuffle = view.findViewById(R.id.playing_shuffle);
         artistTextView.setText(artist);
         songNameTextView.setText(song);
         albumArtView.setImageBitmap(albumArt);
@@ -65,12 +65,8 @@ public class PlayingFragment extends Fragment {
                 musicPlayer.play();
             }
         });
-        previous.setOnClickListener(view0 -> {
-            musicPlayer.previous();
-        });
-        next.setOnClickListener(view0 -> {
-            musicPlayer.next();
-        });
+        previous.setOnClickListener(view0 -> musicPlayer.previous());
+        next.setOnClickListener(view0 -> musicPlayer.next());
         shuffle.setOnClickListener(view1 -> {
             if(musicPlayer.setShuffle()){
                 Toast.makeText(getContext(),"Shuffle enabled!",Toast.LENGTH_SHORT).show();

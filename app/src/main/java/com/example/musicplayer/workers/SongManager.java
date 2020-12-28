@@ -11,11 +11,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class SongManager {
-    private ArrayList<HashMap<String,String>> songs;
-    private HashMap<String,String> album;
-    private HashMap<String,String> artist;
+    private final ArrayList<HashMap<String,String>> songs;
+    private final ArrayList<HashMap<String,String>> album;
+    private final ArrayList<HashMap<String,String>> artist;
 
-    public SongManager(ArrayList<HashMap<String,String>> s, HashMap<String, String> a, HashMap<String,String> b){
+    public SongManager(ArrayList<HashMap<String,String>> s, ArrayList<HashMap<String,String>> a, ArrayList<HashMap<String,String>> b){
         songs = s;
         album = a;
         artist = b;
@@ -25,11 +25,11 @@ public class SongManager {
         return songs;
     }
 
-    public HashMap<String, String> getAlbum() {
+    public ArrayList<HashMap<String,String>> getAlbum() {
         return album;
     }
 
-    public HashMap<String, String> getArtist() {
+    public ArrayList<HashMap<String,String>>getArtist() {
         return artist;
     }
 }

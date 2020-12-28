@@ -14,12 +14,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.musicplayer.R;
 import com.example.musicplayer.workers.AlbumAdapter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AlbumFragment extends Fragment {
-    private HashMap<String,String> albums;
+    private final ArrayList<HashMap<String,String>> albums;
 
-    public AlbumFragment(HashMap<String,String>albums){
+    public AlbumFragment(ArrayList<HashMap<String,String>>albums){
         this.albums = albums;
     }
     @Nullable

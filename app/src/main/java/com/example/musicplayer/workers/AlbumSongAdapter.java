@@ -20,9 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
-    private ArrayList<HashMap<String,String>> songs;
-    private String albumArtist;
-    private Context context;
+    private final ArrayList<HashMap<String,String>> songs;
+    private final String albumArtist;
+    private final Context context;
     int discNum;
     int currentDisk = 0;
     boolean gotDisc = false;
@@ -33,16 +33,15 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if(songs.get(0).containsKey("disc")){
             discNum = 0;
             disk_position.add(0);
-            Collections.sort(songs,new SortSongs("disc"));
+            songs.sort(new SortSongs("disc"));
             songs = splitByDisk(songs);
             gotDisc = true;
             currentDisk = 0;
         }
         else{
-            Collections.sort(songs,new SortSongs("track"));
+            songs.sort(new SortSongs("track"));
         }
         this.songs = songs;
-
     }
 
     @Override
@@ -55,13 +54,11 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if(viewType == 1){
             CardView cardView = (CardView) LayoutInflater.from(parent.getContext()).inflate(R.layout.album_song_card,parent,false);
-            SongViewHolder songViewHolder = new SongViewHolder(cardView);
-            return songViewHolder;
+            return new SongViewHolder(cardView);
         }
         else{
             TextView textView = (TextView) LayoutInflater.from(parent.getContext()).inflate(R.layout.disk_text,parent,false);
-            DiskViewHolder diskViewHolder = new DiskViewHolder(textView);
-            return diskViewHolder;
+            return new DiskViewHolder(textView);
         }
     }
 
@@ -112,7 +109,6 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             textView = t;
         }
     }
-
     private ArrayList<HashMap<String,String>> splitByDisk(ArrayList<HashMap<String,String>> songs){
         ArrayList<HashMap<String,String>> diskTracks = new ArrayList<>();
         ArrayList<HashMap<String,String>> songsss = new ArrayList<>();
@@ -121,7 +117,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             diskTracks.add(song);
             if(i + 1 != songs.size()){
                 if(!song.get("disc").equals(songs.get(i+1).get("disc"))){
-                    Collections.sort(diskTracks,new SortSongs("track"));
+                    diskTracks.sort(new SortSongs("track"));
 
                     songsss.addAll(diskTracks);
                     diskTracks.clear();
@@ -129,7 +125,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 }
             }
             else if(i + 1 == songs.size()){
-                Collections.sort(diskTracks,new SortSongs("track"));
+                diskTracks.sort(new SortSongs("track"));
                 songsss.addAll(diskTracks);
             }
         }
@@ -147,7 +143,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return songsss;
     }
 
-    private class SortSongs implements Comparator<Map<String, String>>
+    private static class SortSongs implements Comparator<Map<String, String>>
     {
         private final String key;
 

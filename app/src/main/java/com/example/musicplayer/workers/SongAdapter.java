@@ -36,8 +36,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder>{
-    private ArrayList<HashMap<String,String>> songs;
-    private Context context;
+    private final ArrayList<HashMap<String,String>> songs;
+    private final Context context;
     public SongAdapter(ArrayList<HashMap<String,String>> songs, Context context){
         this.songs =  songs;
         this.context = context;
@@ -46,8 +46,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
     @Override
     public SongViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         CardView cardView = (CardView) LayoutInflater.from(parent.getContext()).inflate(R.layout.song_card,parent,false);
-        SongViewHolder songViewHolder = new SongViewHolder(cardView);
-        return songViewHolder;
+        return new SongViewHolder(cardView);
     }
 
     @Override

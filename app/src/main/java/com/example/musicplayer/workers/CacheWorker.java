@@ -17,42 +17,40 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class CacheWorker {
-    private LruCache<String, Bitmap> albumArtCache;
+    private final LruCache<String, Bitmap> albumArtCache;
     private DiskLruCache cache;
     private final Object cacheLock = new Object();
-    private final int DISK_CACHE_SIZE = 1024*1024*100;
-    private String directory;
     private boolean initialising = true;
-    private int albumSize;
     private SongManager songManager;
     private Context context;
     public CacheWorker(Context context,String cacheDirectory){
         this.context = context;
         getSongs();
-        this.albumSize = songManager.getAlbum().size();
-        this.directory = cacheDirectory;
-        File diskCache = new File(directory);
+        File diskCache = new File(cacheDirectory);
         new InitDiskCacheTask().execute(diskCache);
         albumArtCache = new LruCache<>(1024*1024*100);
         this.context = context;
         new BitmapWorkerTask().execute(songManager.getSongs());
     }
 
-    public HashMap<String, String> getAlbumMap(){
+    public ArrayList<HashMap<String,String>> getAlbumMap(){
         return songManager.getAlbum();
     }
 
-    public HashMap<String, String> getArtistMap(){
+    public ArrayList<HashMap<String, String>> getArtistMap(){
         return songManager.getArtist();
     }
 
@@ -62,6 +60,45 @@ public class CacheWorker {
 
     public Bitmap getAlbumArt(String albumID){
         return albumArtCache.get(albumID);
+    }
+    public Bitmap getArtistAlbumArt(String artist){
+        for (HashMap<String,String> song:
+                getSongsMap()) {
+            if(song.get("artist").equals(artist)){
+                return albumArtCache.get(song.get("album"));
+            }
+        }
+        return BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
+    }
+
+    public ArrayList<HashMap<String,String>> getArtistSongs(String artist){
+        ArrayList<HashMap<String,String>> artistSongs = new ArrayList<>();
+        ArrayList<HashMap<String,String>> artistAlbums = new ArrayList<>();
+        ArrayList<HashMap<String,String>> albums = getAlbumMap();
+        for (HashMap<String,String> song:
+                getSongsMap()) {
+            if(song.get("artist").equals(artist)){
+                artistSongs.add(song);
+                for (HashMap<String,String> album:
+                        albums) {
+                    if(album.get("ID").equals(song.get("album")) && !artistAlbums.contains(album)){
+                        artistAlbums.add(album);
+                    }
+                }
+            }
+        }
+        return artistSongs;
+    }
+
+    public ArrayList<HashMap<String,String>> getArtistAlbums(String artist){
+        ArrayList<HashMap<String,String>> artistAlbums = new ArrayList<>();
+        for (HashMap<String,String> album:
+                getAlbumMap()) {
+            if(album.get("artist").equals(artist)){
+                artistAlbums.add(album);
+            }
+        }
+        return artistAlbums;
     }
 
     public ArrayList<HashMap<String,String>> getAlbumSongs(String albumID){
@@ -87,12 +124,15 @@ public class CacheWorker {
         }
         try{
             DiskLruCache.Editor editor = cache.edit(album);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            albumArt.compress(Bitmap.CompressFormat.PNG,100,baos);
+
+            ByteBuffer byteBuffer =  ByteBuffer.allocate(albumArt.getByteCount());
+            albumArt.copyPixelsToBuffer(byteBuffer);
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(editor.newOutputStream(0));
-            objectOutputStream.writeObject(baos.toByteArray());
-            baos.close();
+            byte[] yes = byteBuffer.array();
+            objectOutputStream.writeObject(yes);
             editor.commit();
+            byteBuffer.clear();
+
         }catch(IOException e){
             e.printStackTrace();
         }
@@ -111,10 +151,11 @@ public class CacheWorker {
                 try{
                     DiskLruCache.Snapshot snapshot = cache.get(album);
                     if(snapshot == null){return null;}
-                    InputStream bitmapInput = snapshot.getInputStream(0);
-                    Bitmap albumArt = BitmapFactory.decodeStream(bitmapInput);
-                    bitmapInput.close();
-                    return albumArt;
+                    byte[] yes = new byte[(int) snapshot.getLength(0)];
+                    ObjectInputStream objectInputStream = new ObjectInputStream(snapshot.getInputStream(0));
+                    objectInputStream.read(yes);
+                    objectInputStream.close();
+                    return BitmapFactory.decodeByteArray(yes,0,yes.length);
                 }catch(IOException e){
                     e.printStackTrace();
                 }
@@ -130,7 +171,8 @@ public class CacheWorker {
             synchronized (cacheLock){
                 File cacheDir = files[0];
                 try {
-                    cache = DiskLruCache.open(cacheDir,1,1,DISK_CACHE_SIZE);
+                    int DISK_CACHE_SIZE = 1024 * 1024 * 100;
+                    cache = DiskLruCache.open(cacheDir,1,1, DISK_CACHE_SIZE);
                     cacheLock.notifyAll();
                     initialising = false;
                 } catch (IOException e) {
@@ -142,33 +184,37 @@ public class CacheWorker {
     }
 
     private class BitmapWorkerTask extends AsyncTask<ArrayList<HashMap<String,String>>,Void,Void>{
+        @SafeVarargs
         @Override
-        protected Void doInBackground(ArrayList<HashMap<String,String>>... songs) {
-            for (HashMap<String,String> song:songs[0]
-            ) {
-                String album = song.get("album");
-                if(albumArtCache.get(album) == null){
-                    Bitmap albumArt = getCache(album);
-                    if(albumArt == null){
-                        MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-                        mediaMetadataRetriever.setDataSource(song.get("data"));
-                        byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
-                        if(albumBytes == null){
-                            albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-                            albumArtCache.put(album,albumArt);
-                            storeCache(albumArt,song.get("album"));
+        protected final Void doInBackground(ArrayList<HashMap<String, String>>... songs) {
+            if(songs != null){
+                for (HashMap<String,String> song:songs[0]
+                ) {
+                    String album = song.get("album");
+                    if(albumArtCache.get(album) == null){
+                        Bitmap albumArt = getCache(album);
+                        if(albumArt == null){
+                            MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+                            mediaMetadataRetriever.setDataSource(song.get("data"));
+                            byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
+                            if(albumBytes == null){
+                                albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
+                                albumArtCache.put(album,albumArt);
+                                storeCache(albumArt,song.get("album"));
+                            }
+                            else{
+                                albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
+                                albumArtCache.put(album,albumArt);
+                                storeCache(albumArt,song.get("album"));
+                            }
+                            mediaMetadataRetriever.close();
                         }
-                        else{
-                            albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
-                            albumArtCache.put(album,albumArt);
-                            storeCache(albumArt,song.get("album"));
-                        }
-                        mediaMetadataRetriever.close();
-                    }
 
-                    albumArtCache.put(album,albumArt);
+                        albumArtCache.put(album,albumArt);
+                    }
                 }
             }
+
             return null;
         }
     }
@@ -189,7 +235,7 @@ public class CacheWorker {
                 MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM,MediaStore.Audio.Albums.ARTIST
         };
         String[] projection2 = {
-                MediaStore.Audio.Artists._ID, MediaStore.Audio.Artists.ARTIST
+                MediaStore.Audio.Artists._ID, MediaStore.Audio.Artists.ARTIST,MediaStore.Audio.Artists.NUMBER_OF_TRACKS, MediaStore.Audio.Artists.NUMBER_OF_ALBUMS
         };
         Cursor cursor = context.getApplicationContext().getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -213,13 +259,22 @@ public class CacheWorker {
                 null
         );
         ArrayList<HashMap<String,String>> songs = new ArrayList<>();
-        HashMap<String,String> artist = new HashMap<>();
-        HashMap<String,String> albums = new HashMap<>();
+        ArrayList<HashMap<String,String>> artists = new ArrayList<>();
+        ArrayList<HashMap<String,String>> albums = new ArrayList<>();
         while(artistCursor.moveToNext()){
-            artist.put(artistCursor.getString(0),artistCursor.getString(1));
+            HashMap<String,String> artist = new HashMap<>();
+            artist.put("ID",artistCursor.getString(0));
+            artist.put("name",artistCursor.getString(1));
+            artist.put("tracks",artistCursor.getString(2));
+            artist.put("albums",artistCursor.getString(3));
+            artists.add(artist);
         }
         while(albumCursor.moveToNext()){
-            albums.put(albumCursor.getString(0),String.format("%s,%s",albumCursor.getString(1),albumCursor.getString(2)));
+            HashMap<String,String> album = new HashMap<>();
+            album.put("ID",albumCursor.getString(0));
+            album.put("name",albumCursor.getString(1));
+            album.put("artist",albumCursor.getString(2));
+            albums.add(album);
         }
         while(cursor.moveToNext()){
             HashMap<String,String> song = new HashMap<>();
@@ -227,7 +282,13 @@ public class CacheWorker {
             song.put("title",cursor.getString(1));
             song.put("data",cursor.getString(2));
             song.put("display_name",cursor.getString(3));
-            song.put("artist",artist.get(cursor.getString(4)));
+            String ID = cursor.getString(4);
+            for(HashMap<String,String>artist
+                    :artists){
+                if(artist.get("ID").equals(ID)){
+                    song.put("artist",artist.get("name"));
+                }
+            }
             song.put("album",cursor.getString(5));
             song.put("duration",formatDuration(Long.parseLong(cursor.getString(6))));
             song.put("year",cursor.getString(7));
@@ -247,7 +308,7 @@ public class CacheWorker {
         albumCursor.close();
         artistCursor.close();
         cursor.close();
-        songManager = new SongManager(songs,albums,artist);
+        songManager = new SongManager(songs,albums,artists);
     }
 
     private class SortSongs implements Comparator<Map<String, String>>
@@ -274,6 +335,6 @@ public class CacheWorker {
         long seconds = TimeUnit.SECONDS.convert(duration, TimeUnit.MILLISECONDS)
                 - minutes * TimeUnit.SECONDS.convert(1, TimeUnit.MINUTES);
 
-        return String.format("%02d:%02d", minutes, seconds);
+        return String.format(Locale.ENGLISH,"%02d:%02d", minutes, seconds);
     }
 }
