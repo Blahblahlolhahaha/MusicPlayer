@@ -257,12 +257,20 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
             }
             createMusicPlayer();
         });
+        mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                .setState(PlaybackStateCompat.STATE_PLAYING,0,1.0f)
+                .build()
+        );
     }
     @SuppressWarnings("unchecked")
     public void reset(int position,ArrayList<HashMap<String, String>> newSongs){
         original = (ArrayList<HashMap<String, String>>) newSongs.clone();
         songs = (ArrayList<HashMap<String, String>>) original.clone();
         playAnotherSong(position);
+        if(!mediaPlayer.isPlaying()){
+            callback.setLogo(true);
+        }
         if(shuffle){
             shuffle();
         }

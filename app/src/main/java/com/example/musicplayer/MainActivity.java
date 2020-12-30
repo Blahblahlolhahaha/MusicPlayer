@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         return view -> {
             ArrayList<HashMap<String,String>> songs = cacheWorker.getArtistSongs(artistName);
             ArrayList<HashMap<String,String>> albums = cacheWorker.getArtistAlbums(artistName);
-            ArtistFragment artistFragment = new ArtistFragment(songs,albums); FragmentManager fragmentManager = getSupportFragmentManager();
+            ArtistFragment artistFragment = new ArtistFragment(artistName,songs,albums); FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.fragment,artistFragment).addToBackStack("artist").commit();
             artist = true;

@@ -1,6 +1,7 @@
 package com.example.musicplayer.fragments;
 
 import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -62,6 +64,7 @@ public class AlbumSongsFragment extends Fragment {
         toolbar.setSubtitle(artist);
         assert mainActivity != null;
         mainActivity.setSupportActionBar(toolbar);
+        toolbar.setNavigationOnClickListener((view1) -> mainActivity.onBackPressed());
         Objects.requireNonNull(mainActivity.getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         mainActivity.getSupportActionBar().setDisplayShowHomeEnabled(true);
         play.setOnClickListener(mainActivity.getOnclickListener(0,songs));
