@@ -116,6 +116,12 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             HashMap<String,String> song = songs.get(i);
             diskTracks.add(song);
             if(i + 1 != songs.size()){
+                if(songs.get(i).get("disc") == null){
+                    songs.get(i).put("disc","0");
+                }
+                else if(songs.get(i+1).get("disc") == null){
+                    songs.get(i+1).put("disc","0");
+                }
                 if(!song.get("disc").equals(songs.get(i+1).get("disc"))){
                     diskTracks.sort(new SortSongs("track"));
 
@@ -156,8 +162,19 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                            Map<String, String> second)
         {
             if(key.equals("track") || key.equals("disc")){
-                int firstValue = Integer.parseInt(first.get(key));
-                int secondValue = Integer.parseInt(second.get(key));
+                int firstValue,secondValue;
+                if(first.get(key)!=null){
+                    firstValue = Integer.parseInt(first.get(key));
+                }
+                else{
+                    firstValue = 0;
+                }
+                if(second.get(key)!=null){
+                    secondValue = Integer.parseInt(second.get(key));
+                }
+                else{
+                    secondValue = 0;
+                }
                 return firstValue - secondValue;
             }
             else{

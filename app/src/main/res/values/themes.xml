@@ -15,4 +15,10 @@
     <style name="Theme.MusicPlayer.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="Theme.MusicPlayer.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="tablayoutappearance" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="textAllCaps">false</item>
+    </style>
 </resources>
