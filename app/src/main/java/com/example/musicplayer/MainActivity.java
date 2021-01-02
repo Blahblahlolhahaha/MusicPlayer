@@ -51,9 +51,10 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ImageButton play,previous,next;
     private ServiceConnection serviceConnection;
     private LinearLayoutCompat playing;
-    private boolean isPlaying,album,artist;
+    private boolean isPlaying,album,artist,selecting;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
+    private ArrayList<HashMap<String,String>> selectedSongs;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -145,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         }
     }
     
-    public View.OnClickListener getOnclickListener(int position,ArrayList<HashMap<String,String>> songs){
+    public View.OnClickListener getSongOnclickListener(int position, ArrayList<HashMap<String,String>> songs){
         return view -> {
             if(musicPlayer!=null){
                 musicPlayer.reset(position,songs);
@@ -158,6 +159,26 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 startService(intent);
                 play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
             }
+        };
+    }
+
+    public View.OnLongClickListener getSongOnLongClickListener(HashMap<String,String> song){
+        return view -> {
+            boolean selected = !view.isSelected();
+            view.setSelected(selected);
+            if(selected){
+                selectedSongs.add(song);
+                if(selectedSongs.size() == 1){
+                    selecting = true;
+                }
+            }
+            else{
+                selectedSongs.remove(song);
+                if(selectedSongs.size() == 0){
+                    selecting = false;
+                }
+            }
+            return true;
         };
     }
 

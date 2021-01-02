@@ -68,4 +68,54 @@
                 android:background="@drawable/next" />
         </LinearLayout>
     </androidx.appcompat.widget.LinearLayoutCompat>
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/selecting"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:minHeight="80dp"
+        android:background="@color/grey"
+        android:gravity="center"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:visibility="gone">
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/edit"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@color/grey"
+                android:drawableTop="@drawable/edit"
+                android:text="@string/edit"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:layout_marginEnd="40dp"/>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/add"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@color/grey"
+                android:drawableTop="@drawable/add"
+                android:text="@string/add"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:layout_marginEnd="40dp"/>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/delete"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:background="@color/grey"
+                android:drawableTop="@drawable/delete"
+                android:text="@string/delete"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:textColor="@color/white"/>
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
 </androidx.appcompat.widget.LinearLayoutCompat>

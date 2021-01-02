@@ -79,10 +79,13 @@ public class PlayingFragment extends Fragment {
             switch (musicPlayer.setRepeat()){
                 case "no":
                     Toast.makeText(getContext(),"Repeat disabled",Toast.LENGTH_SHORT).show();
+                    break;
                 case "repeat":
                     Toast.makeText(getContext(),"Repeat enabled",Toast.LENGTH_SHORT).show();
+                    break;
                 case "track":
                     Toast.makeText(getContext(),"Repeating current track",Toast.LENGTH_SHORT).show();
+                    break;
             }
         });
     }

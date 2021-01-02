@@ -14,7 +14,6 @@ import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,7 +76,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             }
             songName.setText(song.get("title"));
             duration.setText(song.get("duration"));
-            ((SongViewHolder) holder).bind(((MainActivity)context).getOnclickListener(position,songs));
+            ((SongViewHolder) holder).bind(((MainActivity)context).getSongOnclickListener(position,songs));
         }
         else{
             TextView disk = ((DiskViewHolder)holder).textView;
