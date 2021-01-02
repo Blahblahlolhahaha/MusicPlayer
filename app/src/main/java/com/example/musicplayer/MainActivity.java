@@ -13,6 +13,7 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -23,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -49,8 +51,9 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ImageView albumArtView;
     private Intent intent;
     private ImageButton play,previous,next;
+    private Button edit,add,delete;
     private ServiceConnection serviceConnection;
-    private LinearLayoutCompat playing;
+    private LinearLayoutCompat playing,select;
     private boolean isPlaying,album,artist,selecting;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
@@ -67,6 +70,10 @@ public class MainActivity extends AppCompatActivity implements Callback {
         previous = findViewById(R.id.previous);
         next = findViewById(R.id.next);
         playing = findViewById(R.id.playing);
+        select = findViewById(R.id.selecting);
+        add = findViewById(R.id.addd);
+        edit = findViewById(R.id.edit);
+        delete = findViewById(R.id.delete);
         serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
@@ -95,16 +102,12 @@ public class MainActivity extends AppCompatActivity implements Callback {
         cacheWorker = new CacheWorker(getApplicationContext(),getCacheDir()+File.separator+"albumArt");
         playing.setOnClickListener(view -> {
             if(!songNameTextView.getText().toString().equals("No music playing!")){
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                fragmentTransaction.add(R.id.fragment,playingFragment).addToBackStack("yes").commit();
+                fragmentTransaction(playingFragment,"yes");
                 playing.setVisibility(View.GONE);
                 isPlaying = true;
             }
         });
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment,new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap())).addToBackStack("original").commit();
+        fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap()),"original");
     }
 
     public void isStoragePermissionGranted() {
@@ -143,6 +146,11 @@ public class MainActivity extends AppCompatActivity implements Callback {
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.popBackStack("artist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             artist = false;
+        }
+        else if(selecting){
+            selecting = false;
+            select();
+            selectedSongs.clear();
         }
     }
     
@@ -186,9 +194,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
         return view -> {
             ArrayList<HashMap<String,String>> songs = cacheWorker.getArtistSongs(artistName);
             ArrayList<HashMap<String,String>> albums = cacheWorker.getArtistAlbums(artistName);
-            ArtistFragment artistFragment = new ArtistFragment(artistName,songs,albums); FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.fragment,artistFragment).addToBackStack("artist").commit();
+            ArtistFragment artistFragment = new ArtistFragment(artistName,songs,albums);
+            fragmentTransaction(artistFragment,"artist");
             artist = true;
         };
     }
@@ -198,9 +205,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
             String id = albumMap.get("ID");
             ArrayList<HashMap<String,String>> albumsSongs = cacheWorker.getAlbumSongs(id);
             AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(albumsSongs,getAlbumArt(id),albumMap.get("name"),albumMap.get("artist"));
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.fragment,albumSongsFragment).addToBackStack("album").commit();
+            fragmentTransaction(albumSongsFragment,"album");
             album = true;
         };
     }
@@ -254,4 +259,16 @@ public class MainActivity extends AppCompatActivity implements Callback {
             bound = false;
         }
     }
+
+    private void select(){
+        select.setVisibility(selecting?View.VISIBLE:View.GONE);
+        playing.setVisibility(selecting?View.GONE:View.VISIBLE);
+    }
+
+    private void fragmentTransaction(Fragment fragment,String name){
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction  fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment,fragment).addToBackStack(name).commit();
+    }
+
 }

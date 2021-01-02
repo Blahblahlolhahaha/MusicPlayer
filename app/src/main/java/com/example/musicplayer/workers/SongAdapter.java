@@ -45,6 +45,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         songName.setText(song.get("title"));
         duration.setText(song.get("duration"));
         holder.bindOnClick(((MainActivity)context).getSongOnclickListener(position,songs));
+        holder.bindOnLongClick(((MainActivity) context).getSongOnLongClickListener(song));
     }
 
     @Override
