@@ -39,7 +39,6 @@ import com.example.musicplayer.workers.MusicPlayer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements Callback {
 
@@ -51,20 +50,20 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ImageView albumArtView;
     private Intent intent;
     private ImageButton play,previous,next;
-    private Button edit,add,delete;
+    private Button details,add,delete;
     private ServiceConnection serviceConnection;
     private LinearLayoutCompat playing,select;
     private boolean isPlaying,album,artist,selecting;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
-    private ArrayList<HashMap<String,String>> selectedSongs;
+    private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         playingFragment = new PlayingFragment();
         artistTextView = findViewById(R.id.artist);
-        songNameTextView = findViewById(R.id.song_name);
+        songNameTextView = findViewById(R.id.song);
         albumArtView = findViewById(R.id.album_art);
         play = findViewById(R.id.play);
         previous = findViewById(R.id.previous);
@@ -72,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         playing = findViewById(R.id.playing);
         select = findViewById(R.id.selecting);
         add = findViewById(R.id.addd);
-        edit = findViewById(R.id.edit);
+        details = findViewById(R.id.details);
         delete = findViewById(R.id.delete);
         serviceConnection = new ServiceConnection() {
             @Override
@@ -156,35 +155,54 @@ public class MainActivity extends AppCompatActivity implements Callback {
     
     public View.OnClickListener getSongOnclickListener(int position, ArrayList<HashMap<String,String>> songs){
         return view -> {
-            if(musicPlayer!=null){
-                musicPlayer.reset(position,songs);
+            if(!selecting){
+                if(musicPlayer!=null){
+                    musicPlayer.reset(position,songs);
+                }
+                else{
+                    intent = new Intent(this, MusicPlayer.class);
+                    intent.putExtra("songs",songs);
+                    intent.putExtra("start",position);
+                    bindService();
+                    startService(intent);
+                    play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+                }
             }
             else{
-                intent = new Intent(this, MusicPlayer.class);
-                intent.putExtra("songs",songs);
-                intent.putExtra("start",position);
-                bindService();
-                startService(intent);
-                play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+                LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
+                boolean selected = view.isSelected();
+                view.setSelected(!selected);
+                if(!selected){
+                    selectedSongs.add(songs.get(position));
+                    if(selectedSongs.size() > 1 && details.getVisibility() != View.GONE){
+                        details.setVisibility(View.GONE);
+                    }
+                   linearLayout.setBackgroundColor(getResources().getColor(R.color.blue,null));
+                }
+                else{
+                    selectedSongs.remove(songs.get(position));
+                    if(selectedSongs.size() == 1 && details.getVisibility() == View.GONE){
+                        details.setVisibility(View.VISIBLE);
+                    }
+                    else if(selectedSongs.size() == 0){
+                        selecting = false;
+                        select();
+                    }
+                    linearLayout.setBackgroundColor(getResources().getColor(R.color.black,null));
+                }
             }
         };
     }
 
     public View.OnLongClickListener getSongOnLongClickListener(HashMap<String,String> song){
         return view -> {
-            boolean selected = !view.isSelected();
-            view.setSelected(selected);
-            if(selected){
+            if(!selecting){
+                LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
+                view.setSelected(true);
                 selectedSongs.add(song);
-                if(selectedSongs.size() == 1){
-                    selecting = true;
-                }
-            }
-            else{
-                selectedSongs.remove(song);
-                if(selectedSongs.size() == 0){
-                    selecting = false;
-                }
+                selecting = true;
+                linearLayout.setBackgroundColor(getColor(R.color.blue));
+                select();
             }
             return true;
         };
@@ -243,6 +261,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
     public Bitmap getArtistAlbumArt(String artist){
         return cacheWorker.getArtistAlbumArt(artist);
     }
+
+    public String getAlbumName(String ID){return cacheWorker.getAlbumName(ID);}
 
     public MusicPlayer getMusicPlayer(){
         return musicPlayer;

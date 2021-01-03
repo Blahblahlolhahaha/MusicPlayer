@@ -37,7 +37,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         HashMap<String,String> song = songs.get(position);
         ImageView albumArt = holder.cardView.findViewById(R.id.album_art);
         TextView artist = holder.cardView.findViewById(R.id.artist);
-        TextView songName = holder.cardView.findViewById(R.id.song_name);
+        TextView songName = holder.cardView.findViewById(R.id.song);
         TextView duration = holder.cardView.findViewById(R.id.duration);
         Bitmap album_art = ((MainActivity)context).getAlbumArt(songs.get(position).get("album"));
         albumArt.setImageBitmap(album_art);

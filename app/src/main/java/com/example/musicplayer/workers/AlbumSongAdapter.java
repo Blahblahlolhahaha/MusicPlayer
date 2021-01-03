@@ -67,7 +67,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             HashMap<String,String> song = songs.get(position);
             TextView track = ((SongViewHolder) holder).cardView.findViewById(R.id.track);
             TextView artist = ((SongViewHolder) holder).cardView.findViewById(R.id.artist);
-            TextView songName = (((SongViewHolder) holder)).cardView.findViewById(R.id.song_name);
+            TextView songName = (((SongViewHolder) holder)).cardView.findViewById(R.id.song);
             TextView duration = (((SongViewHolder) holder)).cardView.findViewById(R.id.duration);
             track.setText(song.get("track"));
             if(!song.get("artist").equals(albumArtist)){

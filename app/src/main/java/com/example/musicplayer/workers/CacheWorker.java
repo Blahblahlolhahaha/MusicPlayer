@@ -58,9 +58,20 @@ public class CacheWorker {
         return songManager.getSongs();
     }
 
+    public String getAlbumName(String ID){
+        for (HashMap<String,String> album:
+                getAlbumMap()) {
+            if(album.get("ID").equals(ID)){
+                return album.get("name");
+            }
+        }
+        return "";
+    }
+
     public Bitmap getAlbumArt(String albumID){
         return albumArtCache.get(albumID);
     }
+
     public Bitmap getArtistAlbumArt(String artist){
         for (HashMap<String,String> song:
                 getSongsMap()) {
