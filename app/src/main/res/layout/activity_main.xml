@@ -29,7 +29,7 @@
             android:orientation="vertical"
             android:gravity="center_vertical">
             <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/song_name"
+                android:id="@+id/song"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="No music playing!"
@@ -83,11 +83,11 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/edit"
+                android:id="@+id/details"
                 android:layout_width="70dp"
                 android:layout_height="70dp"
                 android:background="@color/grey"
-                android:drawableTop="@drawable/edit"
+                android:drawableTop="@drawable/details"
                 android:text="@string/edit"
                 android:textSize="16sp"
                 android:textAllCaps="false"
