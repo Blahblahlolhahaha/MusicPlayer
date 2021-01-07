@@ -23,3 +23,6 @@ Its a sad music player that i made to learn a lot of android stuff which include
 * Improve UI
 
 If u guys see any bugs that are not listed here, feel free to open an issue :D
+
+
+Updates will be slower now because school term just started :P
