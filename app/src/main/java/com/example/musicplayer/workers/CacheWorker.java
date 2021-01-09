@@ -8,6 +8,7 @@ import android.icu.text.Edits;
 import android.media.MediaMetadataRetriever;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.util.LruCache;
 
 import com.example.musicplayer.R;
@@ -15,6 +16,7 @@ import com.jakewharton.disklrucache.DiskLruCache;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -63,6 +65,16 @@ public class CacheWorker {
                 getAlbumMap()) {
             if(album.get("ID").equals(ID)){
                 return album.get("name");
+            }
+        }
+        return "";
+    }
+
+    public String getAlbumID(String name){
+        for (HashMap<String,String> album:
+                getAlbumMap()) {
+            if(album.get("name").equals(name)){
+                return album.get("ID");
             }
         }
         return "";
@@ -206,7 +218,12 @@ public class CacheWorker {
                         Bitmap albumArt = getCache(album);
                         if(albumArt == null){
                             MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-                            mediaMetadataRetriever.setDataSource(song.get("data"));
+                            try{
+                                mediaMetadataRetriever.setDataSource(song.get("data"));
+                            }catch(RuntimeException e){
+                                Log.d("sad", "doInBackground: sad".concat(String.valueOf(song)));
+                            }
+
                             byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
                             if(albumBytes == null){
                                 albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);

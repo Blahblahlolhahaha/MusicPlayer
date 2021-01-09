@@ -2,21 +2,27 @@ package com.example.musicplayer;
 
 import android.Manifest;
 import android.content.ComponentName;
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +36,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.example.musicplayer.fragments.AlbumSongsFragment;
 import com.example.musicplayer.fragments.ArtistFragment;
+import com.example.musicplayer.fragments.DetailsEditFragment;
 import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
 import com.example.musicplayer.interfaces.Callback;
@@ -53,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private Button details,add,delete;
     private ServiceConnection serviceConnection;
     private LinearLayoutCompat playing,select;
-    private boolean isPlaying,album,artist,selecting;
+    private boolean isPlaying,album,artist,selecting,viewing;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
     private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
@@ -106,6 +113,29 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 isPlaying = true;
             }
         });
+        details.setOnClickListener(view->{
+            DetailsEditFragment detailsEditFragment = new DetailsEditFragment(selectedSongs.get(0));
+            fragmentTransaction(detailsEditFragment,"details");
+            viewing = true;
+            selecting = false;
+            select.setVisibility(View.GONE);
+        });
+        delete.setOnClickListener(view->{
+            for(HashMap<String,String> song : selectedSongs){
+                File file = new File(song.get("data"));
+                boolean success = file.delete();
+                if(!success){
+                    Toast.makeText(getApplicationContext(),"Something bad happened while deleting: ".concat(song.get("name")), Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Long.parseLong(song.get("ID")));
+                    ContentResolver contentResolver = getContentResolver();
+                    contentResolver.delete(uri,null,null);
+                }
+            }
+            selectedSongs.clear();
+            select();
+        });
         fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap()),"original");
     }
 
@@ -117,6 +147,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
             Log.v(LOG_TAG,"Permission is revoked");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED) {
+            Log.v(LOG_TAG,"Permission is granted");
+        } else {
+
+            Log.v(LOG_TAG,"Permission is revoked");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
     }
 
@@ -150,6 +188,10 @@ public class MainActivity extends AppCompatActivity implements Callback {
             selecting = false;
             select();
             selectedSongs.clear();
+        }
+        else if(viewing){
+           Intent i = new Intent(this,MainActivity.class);
+           startActivity(i);
         }
     }
     
@@ -264,6 +306,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public String getAlbumName(String ID){return cacheWorker.getAlbumName(ID);}
 
+    public String getAlbumID(String name){return cacheWorker.getAlbumID(name);}
+
     public MusicPlayer getMusicPlayer(){
         return musicPlayer;
     }
@@ -290,5 +334,4 @@ public class MainActivity extends AppCompatActivity implements Callback {
         FragmentTransaction  fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragment,fragment).addToBackStack(name).commit();
     }
-
 }
