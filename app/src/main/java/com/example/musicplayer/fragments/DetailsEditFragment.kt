@@ -78,49 +78,52 @@ class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {
             saveButton.visibility = View.GONE
         }
         saveButton.setOnClickListener{
-            val src = File(data)
-            val src_set = MyID3().read(src)
-            val musicMetadata = MusicMetadata("sad")
-            musicMetadata.songTitle = songEdit.text.toString()
-            musicMetadata.artist = artistEdit.text.toString()
-            musicMetadata.album = albumEdit.text.toString()
-            if(song["disc"] != null){
-                musicMetadata.trackNumber = Integer.parseInt(discEdit.text.toString() + String.format("%03d",Integer.parseInt(trackEdit.text.toString())))
-            }
-            else{
-                musicMetadata.trackNumber = Integer.parseInt(trackEdit.text.toString())
-            }
-            musicMetadata.year = yearEdit.text.toString()
-            MyID3().update(src,src_set,musicMetadata)
-            for(editText in editTextArray){
-                editText.inputType = InputType.TYPE_NULL
-            }
-            toolbar.visibility = View.VISIBLE
-            cancelButton.visibility = View.GONE
-            saveButton.visibility = View.GONE
-            if(!mainActivity.getAlbumID(musicMetadata.album).equals("")){
-                val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song["ID"]!!).toLong())
-                val values = ContentValues()
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    values.put(MediaStore.Audio.Media.IS_PENDING, 1)
+            var src: File? = null
+            data?.let { src = File(it)}
+            if(src != null){
+                val srcSet = MyID3().read(src)
+                val musicMetadata = MusicMetadata("sad")
+                musicMetadata.songTitle = songEdit.text.toString()
+                musicMetadata.artist = artistEdit.text.toString()
+                musicMetadata.album = albumEdit.text.toString()
+                if(song["disc"] != null){
+                    musicMetadata.trackNumber = Integer.parseInt(discEdit.text.toString() + String.format("%03d",Integer.parseInt(trackEdit.text.toString())))
                 }
-                val contentResolver = mainActivity.contentResolver
-                contentResolver.update(uri, values, null, null)
-                values.clear()
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    values.put(MediaStore.Audio.Media.IS_PENDING, 0)
+                else{
+                    musicMetadata.trackNumber = Integer.parseInt(trackEdit.text.toString())
                 }
-                values.put(MediaStore.Audio.Media.TITLE, musicMetadata.songTitle)
-                values.put(MediaStore.Audio.Media.ARTIST, musicMetadata.artist)
-                values.put(MediaStore.Audio.Media.ALBUM, musicMetadata.album)
-                values.put(MediaStore.Audio.Media.TRACK, musicMetadata.trackNumber.toString())
-                values.put(MediaStore.Audio.Media.YEAR, musicMetadata.year)
-                contentResolver.update(uri, values, null, null)
+                musicMetadata.year = yearEdit.text.toString()
+                MyID3().update(src,srcSet,musicMetadata)
+                for(editText in editTextArray){
+                    editText.inputType = InputType.TYPE_NULL
+                }
+                toolbar.visibility = View.VISIBLE
+                cancelButton.visibility = View.GONE
+                saveButton.visibility = View.GONE
+                if(!mainActivity.getAlbumID(musicMetadata.album).equals("")){
+                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song["ID"]!!).toLong())
+                    val values = ContentValues()
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        values.put(MediaStore.Audio.Media.IS_PENDING, 1)
+                    }
+                    val contentResolver = mainActivity.contentResolver
+                    contentResolver.update(uri, values, null, null)
+                    values.clear()
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        values.put(MediaStore.Audio.Media.IS_PENDING, 0)
+                    }
+                    values.put(MediaStore.Audio.Media.TITLE, musicMetadata.songTitle)
+                    values.put(MediaStore.Audio.Media.ARTIST, musicMetadata.artist)
+                    values.put(MediaStore.Audio.Media.ALBUM, musicMetadata.album)
+                    values.put(MediaStore.Audio.Media.TRACK, musicMetadata.trackNumber.toString())
+                    values.put(MediaStore.Audio.Media.YEAR, musicMetadata.year)
+                    contentResolver.update(uri, values, null, null)
+                }
+                else{
+                    Toast.makeText(context,"Album does not exist yet in this device! It will take awhile for the device to pick up the changes!",Toast.LENGTH_SHORT).show()
+                }
+                mainActivity.onBackPressed()
             }
-            else{
-                Toast.makeText(context,"Album does not exist yet in this device! It will take awhile for the device to pick up the changes!",Toast.LENGTH_SHORT).show()
-            }
-            mainActivity.onBackPressed()
         }
     }
 
@@ -139,18 +142,20 @@ class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {
                 saveButton.visibility = View.VISIBLE
             }
             R.id.delete -> {
-                val src = File(data)
-                val success = src.delete()
-                if(success){
-                    Toast.makeText(context,"Success!",Toast.LENGTH_SHORT).show()
-                    (context as MainActivity).onBackPressed()
-                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song["ID"]!!).toLong())
-                    val contentResolver = (context as MainActivity).contentResolver
-                    contentResolver.delete(uri,null,null)
-                }
+//                val src = File(data)
+//                val success = src.delete()
+//                if(success){
+//                    Toast.makeText(context,"Success!",Toast.LENGTH_SHORT).show()
+//                    (context as MainActivity).onBackPressed()
+//                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song["ID"]!!).toLong())
+//                    val contentResolver = (context as MainActivity).contentResolver
+//                    contentResolver.delete(uri,null,null)
+//                }
+                context?.let { DeleteDialog(song).showDialog(it) }
+                (context as MainActivity).onBackPressed()
             }
         }
-        return true;
+        return true
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

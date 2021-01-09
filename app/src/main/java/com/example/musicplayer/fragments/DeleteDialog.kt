@@ -1,20 +1,24 @@
 package com.example.musicplayer.fragments
 
 import android.app.Dialog
+import android.content.ContentResolver
+import android.content.ContentUris
 import android.content.Context
+import android.provider.MediaStore
 import android.widget.Button
 import android.widget.Toast
+import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
 import java.io.File
 
 class DeleteDialog {
-    var songPath: String? = null
-    var songPathList: List<String>? = null
-    constructor(pathList: List<String>){
-        songPathList = pathList
+    var song: HashMap<String, String>? = null
+    var songList: ArrayList<HashMap<String, String>>? = null
+    constructor(songList: ArrayList<HashMap<String, String>>){
+        this.songList = songList
     }
-    constructor(path: String){
-        songPath  = path
+    constructor(song: HashMap<String, String>){
+        this.song  = song
     }
 
     fun showDialog(context: Context){
@@ -26,20 +30,29 @@ class DeleteDialog {
             dialog.dismiss()
         }
         delete.setOnClickListener{
-            if(songPath == null){
-                for(path in songPathList!!){
-                    val file = File(path)
-                    val success: Boolean = file.delete()
+            if(song == null){
+                for(song in songList!!){
+                    val src = File(song["data"]!!)
+                    val success = src.delete()
                     if(!success){
-                        Toast.makeText(context,"Something went wrong",Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Something went wrong while deleting " + song["name"], Toast.LENGTH_SHORT).show()
+                    }
+                    else{
+                        val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song["ID"]!!.toLong())
+                        val contentResolver: ContentResolver = context.contentResolver
+                        contentResolver.delete(uri, null, null)
                     }
                 }
             }
             else{
-                val file = File(songPath!!)
-                val success: Boolean = file.delete()
-                if(!success){
-                    Toast.makeText(context,"Something went wrong",Toast.LENGTH_SHORT).show()
+                val src = File(song?.get("data")!!)
+                val success = src.delete()
+                if(success){
+                    Toast.makeText(context, "Success!", Toast.LENGTH_SHORT).show()
+                    (context as MainActivity).onBackPressed()
+                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song?.get("ID")!!).toLong())
+                    val contentResolver = (context as MainActivity).contentResolver
+                    contentResolver.delete(uri, null, null)
                 }
             }
             dialog.dismiss()

@@ -36,6 +36,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.example.musicplayer.fragments.AlbumSongsFragment;
 import com.example.musicplayer.fragments.ArtistFragment;
+import com.example.musicplayer.fragments.DeleteDialog;
 import com.example.musicplayer.fragments.DetailsEditFragment;
 import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
@@ -121,18 +122,19 @@ public class MainActivity extends AppCompatActivity implements Callback {
             select.setVisibility(View.GONE);
         });
         delete.setOnClickListener(view->{
-            for(HashMap<String,String> song : selectedSongs){
-                File file = new File(song.get("data"));
-                boolean success = file.delete();
-                if(!success){
-                    Toast.makeText(getApplicationContext(),"Something bad happened while deleting: ".concat(song.get("name")), Toast.LENGTH_SHORT).show();
-                }
-                else{
-                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Long.parseLong(song.get("ID")));
-                    ContentResolver contentResolver = getContentResolver();
-                    contentResolver.delete(uri,null,null);
-                }
-            }
+//            for(HashMap<String,String> song : selectedSongs){
+//                File file = new File(song.get("data"));
+//                boolean success = file.delete();
+//                if(!success){
+//                    Toast.makeText(getApplicationContext(),"Something bad happened while deleting: ".concat(song.get("name")), Toast.LENGTH_SHORT).show();
+//                }
+//                else{
+//                    Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Long.parseLong(song.get("ID")));
+//                    ContentResolver contentResolver = getContentResolver();
+//                    contentResolver.delete(uri,null,null);
+//                }
+//            }
+            new DeleteDialog(selectedSongs).showDialog(getApplicationContext());
             selectedSongs.clear();
             select();
         });
