@@ -142,15 +142,6 @@ class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {
                 saveButton.visibility = View.VISIBLE
             }
             R.id.delete -> {
-//                val src = File(data)
-//                val success = src.delete()
-//                if(success){
-//                    Toast.makeText(context,"Success!",Toast.LENGTH_SHORT).show()
-//                    (context as MainActivity).onBackPressed()
-//                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song["ID"]!!).toLong())
-//                    val contentResolver = (context as MainActivity).contentResolver
-//                    contentResolver.delete(uri,null,null)
-//                }
                 context?.let { DeleteDialog(song).showDialog(it) }
             }
         }

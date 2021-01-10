@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.icu.text.Edits;
 import android.media.MediaMetadataRetriever;
 import android.os.AsyncTask;
 import android.provider.MediaStore;
@@ -14,11 +13,8 @@ import android.util.LruCache;
 import com.example.musicplayer.R;
 import com.jakewharton.disklrucache.DiskLruCache;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
@@ -26,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -49,11 +44,11 @@ public class CacheWorker {
     }
 
     public ArrayList<HashMap<String,String>> getAlbumMap(){
-        return songManager.getAlbum();
+        return songManager.getAlbums();
     }
 
     public ArrayList<HashMap<String, String>> getArtistMap(){
-        return songManager.getArtist();
+        return songManager.getArtists();
     }
 
     public ArrayList<HashMap<String,String>> getSongsMap(){
@@ -227,14 +222,12 @@ public class CacheWorker {
                             byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
                             if(albumBytes == null){
                                 albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-                                albumArtCache.put(album,albumArt);
-                                storeCache(albumArt,song.get("album"));
                             }
                             else{
                                 albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
-                                albumArtCache.put(album,albumArt);
-                                storeCache(albumArt,song.get("album"));
                             }
+                            albumArtCache.put(album,albumArt);
+                            storeCache(albumArt,song.get("album"));
                             mediaMetadataRetriever.close();
                         }
 
@@ -265,6 +258,9 @@ public class CacheWorker {
         String[] projection2 = {
                 MediaStore.Audio.Artists._ID, MediaStore.Audio.Artists.ARTIST,MediaStore.Audio.Artists.NUMBER_OF_TRACKS, MediaStore.Audio.Artists.NUMBER_OF_ALBUMS
         };
+        String[] projection3 = {
+                MediaStore.Audio.Playlists._ID,MediaStore.Audio.Playlists.NAME
+        };
         Cursor cursor = context.getApplicationContext().getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 projection,
@@ -286,9 +282,18 @@ public class CacheWorker {
                 null,
                 null
         );
+        Cursor playlistCursor = context.getApplicationContext().getContentResolver().query(
+                MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
+                projection3,
+                null,
+                null,
+                null
+        );
+
         ArrayList<HashMap<String,String>> songs = new ArrayList<>();
         ArrayList<HashMap<String,String>> artists = new ArrayList<>();
         ArrayList<HashMap<String,String>> albums = new ArrayList<>();
+        ArrayList<Playlist> playlists = new ArrayList<>();
         while(artistCursor.moveToNext()){
             HashMap<String,String> artist = new HashMap<>();
             artist.put("ID",artistCursor.getString(0));
@@ -333,10 +338,35 @@ public class CacheWorker {
             songs.add(song);
         }
         Collections.sort(songs,new SortSongs("title"));
+        while(playlistCursor.moveToNext()){
+            String id = cursor.getString(0);
+            long idLong = Long.parseLong(id);
+            String[] projection4 = {
+                    MediaStore.Audio.Playlists.Members._ID,
+            };
+            Cursor playlistSongCursor = context.getContentResolver().query(
+                    MediaStore.Audio.Playlists.Members.getContentUri("external",idLong),
+                    projection4,
+                    MediaStore.Audio.Media.IS_MUSIC +" != 0 ",
+                    null,
+                    null);
+            ArrayList<HashMap<String,String>> playListSongs = new ArrayList<>();
+            while(playlistSongCursor.moveToNext()){
+                for(HashMap<String,String>song:
+                songs){
+                    if(song.get("ID").equals(cursor.getString(0))){
+                        playListSongs.add(song);
+                    }
+                }
+            }
+            playlists.add(new Playlist(id,cursor.getString(1),playListSongs));
+            playlistSongCursor.close();
+        }
         albumCursor.close();
         artistCursor.close();
         cursor.close();
-        songManager = new SongManager(songs,albums,artists);
+        playlistCursor.close();
+        songManager = new SongManager(songs,albums,artists,playlists);
     }
 
     private class SortSongs implements Comparator<Map<String, String>>
