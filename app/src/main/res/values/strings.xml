@@ -19,7 +19,7 @@
     <string name="track">Track</string>
     <string name="year">Year</string>
     <string name="path">Path:</string>
-    <string name="delete_dialog">Are you sure you want to delete this song?</string>
+    <string name="delete_dialog">Delete this song?</string>
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
 </resources>

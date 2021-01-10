@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
 //                    contentResolver.delete(uri,null,null);
 //                }
 //            }
-            new DeleteDialog(selectedSongs).showDialog(getApplicationContext());
+            new DeleteDialog(selectedSongs).showDialog(MainActivity.this);
             selectedSongs.clear();
             select();
         });

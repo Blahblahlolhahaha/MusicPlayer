@@ -43,6 +43,7 @@ class DeleteDialog {
                         contentResolver.delete(uri, null, null)
                     }
                 }
+                (context as MainActivity).onBackPressed()
             }
             else{
                 val src = File(song?.get("data")!!)
@@ -51,7 +52,7 @@ class DeleteDialog {
                     Toast.makeText(context, "Success!", Toast.LENGTH_SHORT).show()
                     (context as MainActivity).onBackPressed()
                     val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song?.get("ID")!!).toLong())
-                    val contentResolver = (context as MainActivity).contentResolver
+                    val contentResolver = context.contentResolver
                     contentResolver.delete(uri, null, null)
                 }
             }

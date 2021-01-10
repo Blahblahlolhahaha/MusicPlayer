@@ -152,7 +152,6 @@ class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {
 //                    contentResolver.delete(uri,null,null)
 //                }
                 context?.let { DeleteDialog(song).showDialog(it) }
-                (context as MainActivity).onBackPressed()
             }
         }
         return true
