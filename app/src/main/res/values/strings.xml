@@ -23,4 +23,7 @@
     <string name="cancel">Cancel</string>
     <string name="save">Save</string>
     <string name="add_a_new_playlist">Add a new playlist!</string>
+    <string name="playlist_name">Playlist Name</string>
+    <string name="name">Name</string>
+    <string name="create">Create</string>
 </resources>

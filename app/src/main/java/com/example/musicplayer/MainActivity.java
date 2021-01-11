@@ -319,7 +319,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         playing.setVisibility(selecting?View.GONE:View.VISIBLE);
     }
 
-    private void fragmentTransaction(Fragment fragment,String name){
+    public void fragmentTransaction(Fragment fragment,String name){
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction  fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragment,fragment).addToBackStack(name).commit();
