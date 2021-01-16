@@ -22,7 +22,7 @@ class DeleteDialog {
     }
 
     fun showDialog(context: Context){
-        val dialog: Dialog = Dialog(context)
+        val dialog = Dialog(context)
         dialog.setContentView(R.layout.delete_dialog)
         val cancel: Button = dialog.findViewById(R.id.cancel)
         val delete: Button = dialog.findViewById(R.id.delete)

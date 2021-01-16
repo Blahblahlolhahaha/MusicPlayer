@@ -2,6 +2,7 @@ package com.example.musicplayer.workers
 
 import android.content.Context
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
@@ -19,8 +20,8 @@ class PlaylistsAdapter(val playlist:ArrayList<Playlist>, val context: Context): 
     override fun onBindViewHolder(holder: playlistViewHolder, position: Int) {
         val imageView: ImageView = holder.cardView.findViewById(R.id.album_art)
         val textView: TextView = holder.cardView.findViewById(R.id.playlist)
-        imageView.setImageBitmap((context as MainActivity).getAlbumArt(playlist.get(position).songs.get(0).get("album")))
-        textView.setText(playlist.get(position).name)
+        imageView.setImageBitmap((context as MainActivity).getAlbumArt(playlist[position].firstSongAlbum))
+        textView.setText(playlist[position].name)
     }
 
     override fun getItemCount(): Int {
@@ -29,6 +30,8 @@ class PlaylistsAdapter(val playlist:ArrayList<Playlist>, val context: Context): 
 
 
     class playlistViewHolder(val cardView: CardView): RecyclerView.ViewHolder(cardView) {
-
+        fun bind(callback: View.OnClickListener){
+            cardView.setOnClickListener(callback)
+        }
     }
 }

@@ -40,9 +40,11 @@ import com.example.musicplayer.fragments.DeleteDialog;
 import com.example.musicplayer.fragments.DetailsEditFragment;
 import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
+import com.example.musicplayer.fragments.PlaylistSongsFragment;
 import com.example.musicplayer.interfaces.Callback;
 import com.example.musicplayer.workers.CacheWorker;
 import com.example.musicplayer.workers.MusicPlayer;
+import com.example.musicplayer.workers.Playlist;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -58,10 +60,10 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ImageView albumArtView;
     private Intent intent;
     private ImageButton play,previous,next;
-    private Button details,add,delete;
+    private Button details,add,delete,playSelected,remove;
     private ServiceConnection serviceConnection;
     private LinearLayoutCompat playing,select;
-    private boolean isPlaying,album,artist,selecting,viewing;
+    private boolean isPlaying,album,artist,selecting,viewing,playlist;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
     private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
@@ -81,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         add = findViewById(R.id.addd);
         details = findViewById(R.id.details);
         delete = findViewById(R.id.delete);
+        playSelected = findViewById(R.id.play_selected);
         serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
@@ -125,6 +128,17 @@ public class MainActivity extends AppCompatActivity implements Callback {
             new DeleteDialog(selectedSongs).showDialog(MainActivity.this);
             selectedSongs.clear();
             select();
+        });
+        playSelected.setOnClickListener(view->{
+            intent = new Intent(this, MusicPlayer.class);
+            intent.putExtra("songs",selectedSongs);
+            intent.putExtra("start",0);
+            bindService();
+            startService(intent);
+            play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+        });
+        remove.setOnClickListener(view -> {
+
         });
         fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap()),"original");
     }
@@ -235,6 +249,13 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 selecting = true;
                 linearLayout.setBackgroundColor(getColor(R.color.blue));
                 select();
+                if(playlist){
+                    remove.setVisibility(View.VISIBLE);
+                    delete.setVisibility(View.INVISIBLE);
+                }
+            }
+            else{
+                view.performClick();
             }
             return true;
         };
@@ -260,7 +281,13 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
-
+    public View.OnClickListener getPlaylistOnClickListener(final Playlist playlist){
+        return view->{
+            PlaylistSongsFragment playlistSongsFragment = new PlaylistSongsFragment(playlist);
+            fragmentTransaction(playlistSongsFragment,"playlist");
+            this.playlist = true;
+        };
+    }
 
     public void callback(String songName, String artist, String album){
         songNameTextView.setText(songName);

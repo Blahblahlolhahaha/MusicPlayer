@@ -30,8 +30,5 @@ class PlaylistFragment(val playlist: ArrayList<Playlist>):Fragment() {
         playlists.layoutManager = linearLayoutManager
         playlists.setHasFixedSize(true)
         playlists.adapter = playlistsAdapter
-
-
     }
-
 }

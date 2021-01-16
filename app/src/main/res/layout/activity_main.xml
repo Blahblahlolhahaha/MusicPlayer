@@ -83,9 +83,20 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/play_selected"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@color/grey"
+                android:drawableTop="@drawable/play"
+                android:text="Play"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:layout_marginEnd="40dp"/>
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/details"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:background="@color/grey"
                 android:drawableTop="@drawable/details"
                 android:text="@string/edit"
@@ -95,8 +106,8 @@
                 android:layout_marginEnd="40dp"/>
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/addd"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:background="@color/grey"
                 android:drawableTop="@drawable/add"
                 android:text="@string/add"
@@ -106,14 +117,25 @@
                 android:layout_marginEnd="40dp"/>
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/delete"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
                 android:background="@color/grey"
                 android:drawableTop="@drawable/delete"
                 android:text="@string/delete"
                 android:textSize="16sp"
                 android:textAllCaps="false"
                 android:textColor="@color/white"/>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/remove"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@color/grey"
+                android:drawableTop="@drawable/remove"
+                android:text="@string/remove"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:visibility="gone"/>
         </androidx.appcompat.widget.LinearLayoutCompat>
 
 
