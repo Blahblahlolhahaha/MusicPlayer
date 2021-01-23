@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import android.database.sqlite.SQLiteException
 import android.net.Uri
 import android.provider.MediaStore
 import android.widget.Button
@@ -19,7 +20,7 @@ class PlaylistDialog {
 
     fun showDialog(context: Context){
         val dialog = Dialog(context)
-        dialog.setContentView(R.layout.delete_dialog)
+        dialog.setContentView(R.layout.playlist_name_dialog)
         val cancel: Button = dialog.findViewById(R.id.cancel)
         val editText: EditText = dialog.findViewById(R.id.name)
         val create: Button = dialog.findViewById(R.id.create)
@@ -37,11 +38,12 @@ class PlaylistDialog {
                 val projection = arrayOf(
                         MediaStore.Audio.Playlists._ID, MediaStore.Audio.Playlists.NAME
                 )
-                val cursor: Cursor =  contentResolver.query(playlistUri, projection, MediaStore.Audio.Playlists.NAME + "= " + name, null, null)!!
-                if(cursor.moveToNext()){
-                    Toast.makeText(context, "Playlist already exists!", Toast.LENGTH_SHORT).show()
-                }
-                else{
+                try{
+                    val cursor: Cursor =  contentResolver.query(playlistUri, projection, MediaStore.Audio.Playlists.NAME + "=" + name + "", null, null)!!
+                    if(cursor.moveToNext()){
+                        Toast.makeText(context, "Playlist already exists!", Toast.LENGTH_SHORT).show()
+                    }
+                }catch(error: SQLiteException){
                     val contentValues = ContentValues()
                     contentValues.put(MediaStore.Audio.Playlists.NAME, name)
                     context.contentResolver.insert(playlistUri, contentValues)
@@ -51,9 +53,7 @@ class PlaylistDialog {
                         val playlist = Playlist(cursor.getString(0),cursor.getString(1), ArrayList())
                         (context as MainActivity).fragmentTransaction(PlaylistSongsFragment(playlist),"Playlist Songs")
                     }
-
                 }
-
             }
         }
 

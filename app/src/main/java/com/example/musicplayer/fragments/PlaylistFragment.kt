@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,7 +21,7 @@ class PlaylistFragment(val playlist: ArrayList<Playlist>):Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val add_playlist: Button =  view.findViewById(R.id.add_playlist)
+        val add_playlist: CardView =  view.findViewById(R.id.add_playlist)
         val playlists: RecyclerView = view.findViewById(R.id.playlist)
         val linearLayoutManager = LinearLayoutManager(context)
         val playlistsAdapter = PlaylistsAdapter(playlist,requireContext())

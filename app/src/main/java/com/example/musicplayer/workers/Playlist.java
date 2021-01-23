@@ -17,11 +17,12 @@ public class Playlist {
     private String ID;
     private String name;
     private ArrayList<HashMap<String,String>> songs;
-    private Uri playlistUri = ContentUris.withAppendedId(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,Long.parseLong(ID));
+    private Uri playlistUri;
     public Playlist(String ID, String name, ArrayList<HashMap<String,String>> songs){
         this.ID = ID;
         this.name = name;
         this.songs = songs;
+        playlistUri = MediaStore.Audio.Playlists.Members.getContentUri("external", Long.parseLong(ID));
     }
 
     public String getID() {
@@ -37,7 +38,10 @@ public class Playlist {
     }
 
     public String getFirstSongAlbum(){
-        return songs.get(0).get("album");
+        if(songs.size() != 0){
+            return songs.get(0).get("album");
+        }
+        return "";
     }
 
     public void addSongs(String[]songIDs, Context context){
@@ -45,21 +49,34 @@ public class Playlist {
         String[] cols = new String[] {
                 "count(*)"
         };
-        Uri uri = MediaStore.Audio.Playlists.getContentUri("external" + ID);
-        Cursor cursor = contentResolver.query(uri,cols,null,null);
-        cursor.moveToFirst();
-        final int base = cursor.getInt(0);
+        final int base = songs.size();
+        ContentValues[] contentValues = new ContentValues[songIDs.length];
         for(int i = 0;i<songIDs.length;i++){
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(MediaStore.Audio.Playlists.Members.PLAY_ORDER, base+i+1);
-            contentValues.put(MediaStore.Audio.Playlists.Members.AUDIO_ID,songIDs[i]);
+            ContentValues contentValue = new ContentValues();
+            contentValue.put(MediaStore.Audio.Playlists.Members.PLAY_ORDER, base+i+1);
+            contentValue.put(MediaStore.Audio.Playlists.Members.AUDIO_ID,songIDs[i]);
+            contentValues[i] = contentValue;
         }
+        contentResolver.bulkInsert(playlistUri,contentValues);
+        contentResolver.notifyChange(Uri.parse("content://media"), null);
     }
 
     public void removeSongs(String[]songIDs, Context context){
         ContentResolver contentResolver = context.getContentResolver();
+        int[] positions = new int[songIDs.length];
+        int count  = 0;
         for(String id : songIDs){
             contentResolver.delete(playlistUri,MediaStore.Audio.Playlists.Members.AUDIO_ID + "=" + id,null);
+            for(int i = 0;i<songs.size();i++){
+                if(songs.get(i).get("ID").equals(id)){
+                    positions[count] = i;
+                }
+            }
+            count++;
         }
+        for(int i = 0;i<positions.length;i++){
+            songs.remove(positions[i]);
+        }
+
     }
 }

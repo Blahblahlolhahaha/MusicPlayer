@@ -20,8 +20,11 @@ class PlaylistsAdapter(val playlist:ArrayList<Playlist>, val context: Context): 
     override fun onBindViewHolder(holder: playlistViewHolder, position: Int) {
         val imageView: ImageView = holder.cardView.findViewById(R.id.album_art)
         val textView: TextView = holder.cardView.findViewById(R.id.playlist)
-        imageView.setImageBitmap((context as MainActivity).getAlbumArt(playlist[position].firstSongAlbum))
+        if(playlist[position].firstSongAlbum.equals("")){
+            imageView.setImageBitmap((context as MainActivity).getAlbumArt(playlist[position].firstSongAlbum))
+        }
         textView.setText(playlist[position].name)
+        holder.bind((context as MainActivity).getPlaylistOnClickListener(playlist[position]))
     }
 
     override fun getItemCount(): Int {

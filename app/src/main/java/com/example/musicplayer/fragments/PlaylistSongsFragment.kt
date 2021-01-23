@@ -5,10 +5,7 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.os.Bundle
 import android.provider.MediaStore
-import android.view.LayoutInflater
-import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Button
 import android.widget.Toolbar
 import androidx.fragment.app.Fragment
@@ -46,6 +43,8 @@ class PlaylistSongsFragment(val playlist:Playlist):Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
             R.id.addd ->{
+                (context as MainActivity).fragmentTransaction(SelectSongs(playlist),"select")
+                (context as MainActivity).setPlaylistSongs(true)
             }
             R.id.delete->{
                 val dialog = Dialog(requireContext())
@@ -58,11 +57,14 @@ class PlaylistSongsFragment(val playlist:Playlist):Fragment() {
                 delete.setOnClickListener{
                     val uri = ContentUris.withAppendedId(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,playlist.id.toLong())
                     requireContext().contentResolver.delete(uri,null,null)
-                    (context as MainActivity).onBackPressed()
+                    (requireContext() as MainActivity).onBackPressed()
                 }
                 dialog.show()
             }
         }
         return true
+    }
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        inflater.inflate(R.menu.playlist_menu,menu)
     }
 }

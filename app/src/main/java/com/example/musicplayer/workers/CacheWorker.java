@@ -55,6 +55,8 @@ public class CacheWorker {
         return songManager.getSongs();
     }
 
+    public ArrayList<Playlist> getPlaylistMap() { return songManager.getPlaylists(); }
+
     public String getAlbumName(String ID){
         for (HashMap<String,String> album:
                 getAlbumMap()) {
@@ -283,7 +285,7 @@ public class CacheWorker {
                 null
         );
         Cursor playlistCursor = context.getApplicationContext().getContentResolver().query(
-                MediaStore.Audio.Artists.EXTERNAL_CONTENT_URI,
+                MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
                 projection3,
                 null,
                 null,
@@ -339,10 +341,10 @@ public class CacheWorker {
         }
         Collections.sort(songs,new SortSongs("title"));
         while(playlistCursor.moveToNext()){
-            String id = cursor.getString(0);
+            String id = playlistCursor.getString(0);
             long idLong = Long.parseLong(id);
             String[] projection4 = {
-                    MediaStore.Audio.Playlists.Members._ID,
+                    MediaStore.Audio.Playlists.Members.AUDIO_ID,
             };
             Cursor playlistSongCursor = context.getContentResolver().query(
                     MediaStore.Audio.Playlists.Members.getContentUri("external",idLong),
@@ -352,14 +354,15 @@ public class CacheWorker {
                     null);
             ArrayList<HashMap<String,String>> playListSongs = new ArrayList<>();
             while(playlistSongCursor.moveToNext()){
+                Log.d("yes",playlistSongCursor.getString(0));
                 for(HashMap<String,String>song:
                 songs){
-                    if(song.get("ID").equals(cursor.getString(0))){
+                    if(song.get("ID").equals(playlistSongCursor.getString(0))){
                         playListSongs.add(song);
                     }
                 }
             }
-            playlists.add(new Playlist(id,cursor.getString(1),playListSongs));
+            playlists.add(new Playlist(id,playlistCursor.getString(1),playListSongs));
             playlistSongCursor.close();
         }
         albumCursor.close();
