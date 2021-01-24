@@ -11,16 +11,16 @@ Its a sad music player that i made to learn a lot of android stuff which include
 * a lot of data storage ideas
 
 ## Known Bugs/ Issues
-* Play/pause sometimes do not go right
-* App startup is very slow
-    * Album art loading slow
-* Artist tab causes app to crash if changed to that tab when app is just started
-* Some artists do not have albums shown
+* Sometimes album artist is not showing properly
+* Sometimes switching tabs right when app starts crashes the app
+* Music control in notifications refuses to go, even after closing the app
+
+
 ## TODO
-* Add playlists
 * Optimise code
 * Add seekbar in noti/playing fragment
 * Improve UI
+* Add genres
 
 If u guys see any bugs that are not listed here, feel free to open an issue :D
 
