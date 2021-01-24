@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
     private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
+    private ArrayList<View> selectedViews = new ArrayList<>();
     private Playlist currentPlaylist;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -210,12 +211,12 @@ public class MainActivity extends AppCompatActivity implements Callback {
             playlistSongs = false;
             selecting = false;
             select();
-            selectedSongs.clear();
+            unSelect();
         }
         else if(selecting){
             selecting = false;
             select();
-            selectedSongs.clear();
+            unSelect();
         }
         else if(viewing){
            Intent i = new Intent(this,MainActivity.class);
@@ -237,6 +238,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 view.setSelected(!selected);
                 if(!selected){
                     selectedSongs.add(songs.get(position));
+                    selectedViews.add(view);
                     if(selectedSongs.size() > 1 && details.getVisibility() != View.GONE){
                         details.setVisibility(View.GONE);
                     }
@@ -244,6 +246,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 }
                 else{
                     selectedSongs.remove(songs.get(position));
+                    selectedViews.remove(view);
                     if(selectedSongs.size() == 1 && details.getVisibility() == View.GONE){
                         details.setVisibility(View.VISIBLE);
                     }
@@ -276,6 +279,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
                 view.setSelected(true);
                 selectedSongs.add(song);
+                selectedViews.add(view);
                 selecting = true;
                 linearLayout.setBackgroundColor(getColor(R.color.blue));
                 select();
@@ -380,6 +384,12 @@ public class MainActivity extends AppCompatActivity implements Callback {
         this.playlistSongs = playlistSongs;
     }
 
+    public void fragmentTransaction(Fragment fragment,String name){
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction  fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment,fragment).addToBackStack(name).commit();
+    }
+
     private void bindService(){
         bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);
     }
@@ -397,9 +407,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
         playing.setVisibility(selecting?View.GONE:View.VISIBLE);
     }
 
-    public void fragmentTransaction(Fragment fragment,String name){
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction  fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment,fragment).addToBackStack(name).commit();
+    private void unSelect(){
+        for(View view : selectedViews){
+            LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
+            view.setSelected(false);
+            linearLayout.setBackgroundColor(getResources().getColor(R.color.black,null));
+        }
+        selectedSongs.clear();
+        selectedViews.clear();
     }
+
 }
