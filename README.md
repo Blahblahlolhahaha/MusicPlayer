@@ -21,6 +21,7 @@ Its a sad music player that i made to learn a lot of android stuff which include
 * Add seekbar in noti/playing fragment
 * Improve UI
 * Add genres
+* Add shortcut to add songs to queue/playlist
 
 If u guys see any bugs that are not listed here, feel free to open an issue :D
 
