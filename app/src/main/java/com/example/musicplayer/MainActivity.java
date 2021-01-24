@@ -13,8 +13,10 @@ import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,21 +25,25 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.musicplayer.fragments.AlbumSongsFragment;
 import com.example.musicplayer.fragments.ArtistFragment;
+import com.example.musicplayer.fragments.DeleteDialog;
+import com.example.musicplayer.fragments.DetailsEditFragment;
 import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
+import com.example.musicplayer.fragments.PlaylistSongsFragment;
 import com.example.musicplayer.interfaces.Callback;
 import com.example.musicplayer.workers.CacheWorker;
 import com.example.musicplayer.workers.MusicPlayer;
+import com.example.musicplayer.workers.Playlist;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements Callback {
 
@@ -49,24 +55,33 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ImageView albumArtView;
     private Intent intent;
     private ImageButton play,previous,next;
+    private Button details,add,delete,playSelected,remove;
     private ServiceConnection serviceConnection;
-    private LinearLayoutCompat playing;
-    private boolean isPlaying,album,artist,selecting;
+    private LinearLayoutCompat playing,select;
+    private boolean isPlaying,album,artist,selecting,viewing,playlist,playlistSongs;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
-    private ArrayList<HashMap<String,String>> selectedSongs;
+    private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
+    private ArrayList<View> selectedViews = new ArrayList<>();
+    private Playlist currentPlaylist;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         playingFragment = new PlayingFragment();
         artistTextView = findViewById(R.id.artist);
-        songNameTextView = findViewById(R.id.song_name);
+        songNameTextView = findViewById(R.id.song);
         albumArtView = findViewById(R.id.album_art);
         play = findViewById(R.id.play);
         previous = findViewById(R.id.previous);
         next = findViewById(R.id.next);
         playing = findViewById(R.id.playing);
+        select = findViewById(R.id.selecting);
+        add = findViewById(R.id.addd);
+        details = findViewById(R.id.details);
+        delete = findViewById(R.id.delete);
+        playSelected = findViewById(R.id.play_selected);
+        remove = findViewById(R.id.remove);
         serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
@@ -95,16 +110,47 @@ public class MainActivity extends AppCompatActivity implements Callback {
         cacheWorker = new CacheWorker(getApplicationContext(),getCacheDir()+File.separator+"albumArt");
         playing.setOnClickListener(view -> {
             if(!songNameTextView.getText().toString().equals("No music playing!")){
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                fragmentTransaction.add(R.id.fragment,playingFragment).addToBackStack("yes").commit();
+                fragmentTransaction(playingFragment,"yes");
                 playing.setVisibility(View.GONE);
                 isPlaying = true;
             }
         });
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment,new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap())).addToBackStack("original").commit();
+        details.setOnClickListener(view->{
+            DetailsEditFragment detailsEditFragment = new DetailsEditFragment(selectedSongs.get(0));
+            fragmentTransaction(detailsEditFragment,"details");
+            viewing = true;
+            selecting = false;
+            select.setVisibility(View.GONE);
+        });
+        delete.setOnClickListener(view->{
+            new DeleteDialog(selectedSongs).showDialog(MainActivity.this);
+            selectedSongs.clear();
+            select();
+        });
+        playSelected.setOnClickListener(view->{
+            if(musicPlayer!=null){
+                musicPlayer.reset(0,selectedSongs);
+            }
+            else{
+                intent = new Intent(this, MusicPlayer.class);
+                intent.putExtra("songs",selectedSongs);
+                intent.putExtra("start",0);
+                bindService();
+                startService(intent);
+                play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+            }
+
+        });
+        remove.setOnClickListener(view -> {
+            String[]IDs = new String[selectedSongs.size()];
+            for(int i = 0; i<IDs.length;i++){
+                IDs[i] = selectedSongs.get(i).get("ID");
+            }
+            this.currentPlaylist.removeSongs(IDs,getApplicationContext());
+            onBackPressed();
+            fragmentTransaction(new PlaylistSongsFragment(currentPlaylist),"playlist");
+        });
+        fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getPlaylistMap()),"original");
     }
 
     public void isStoragePermissionGranted() {
@@ -115,6 +161,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
             Log.v(LOG_TAG,"Permission is revoked");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED) {
+            Log.v(LOG_TAG,"Permission is granted");
+        } else {
+
+            Log.v(LOG_TAG,"Permission is revoked");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
     }
 
@@ -144,39 +198,95 @@ public class MainActivity extends AppCompatActivity implements Callback {
             fragmentManager.popBackStack("artist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             artist = false;
         }
+        else if(playlistSongs){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.popBackStack("select",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            fragmentManager.popBackStack("playlist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            fragmentTransaction(new PlaylistSongsFragment(currentPlaylist),"playlist");
+            playlistSongs = false;
+            selecting = false;
+            select();
+            unSelect();
+        }
+        else if(selecting){
+            selecting = false;
+            select();
+            unSelect();
+        }
+        else if(viewing){
+           Intent i = new Intent(this,MainActivity.class);
+           startActivity(i);
+        }
+        else if(playlist){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.popBackStack("playlist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            playlist = false;
+            currentPlaylist = null;
+        }
     }
     
     public View.OnClickListener getSongOnclickListener(int position, ArrayList<HashMap<String,String>> songs){
         return view -> {
-            if(musicPlayer!=null){
-                musicPlayer.reset(position,songs);
+            if(selecting){
+                LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
+                boolean selected = view.isSelected();
+                view.setSelected(!selected);
+                if(!selected){
+                    selectedSongs.add(songs.get(position));
+                    selectedViews.add(view);
+                    if(selectedSongs.size() > 1 && details.getVisibility() != View.GONE){
+                        details.setVisibility(View.GONE);
+                    }
+                    linearLayout.setBackgroundColor(getResources().getColor(R.color.blue,null));
+                }
+                else{
+                    selectedSongs.remove(songs.get(position));
+                    selectedViews.remove(view);
+                    if(!playlistSongs){
+                        if(selectedSongs.size() == 1 && details.getVisibility() == View.GONE){
+                            details.setVisibility(View.VISIBLE);
+                        }
+                        else if(selectedSongs.size() == 0){
+                            selecting = false;
+                            select();
+                        }
+                    }
+                    linearLayout.setBackgroundColor(getResources().getColor(R.color.black,null));
+                }
             }
             else{
-                intent = new Intent(this, MusicPlayer.class);
-                intent.putExtra("songs",songs);
-                intent.putExtra("start",position);
-                bindService();
-                startService(intent);
-                play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+                if(musicPlayer!=null){
+                    musicPlayer.reset(position,songs);
+                }
+                else{
+                    intent = new Intent(this, MusicPlayer.class);
+                    intent.putExtra("songs",songs);
+                    intent.putExtra("start",position);
+                    bindService();
+                    startService(intent);
+                    play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+                }
             }
         };
     }
 
     public View.OnLongClickListener getSongOnLongClickListener(HashMap<String,String> song){
         return view -> {
-            boolean selected = !view.isSelected();
-            view.setSelected(selected);
-            if(selected){
+            if(!selecting){
+                LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
+                view.setSelected(true);
                 selectedSongs.add(song);
-                if(selectedSongs.size() == 1){
-                    selecting = true;
+                selectedViews.add(view);
+                selecting = true;
+                linearLayout.setBackgroundColor(getColor(R.color.blue));
+                select();
+                if(playlist){
+                    remove.setVisibility(View.VISIBLE);
+                    delete.setVisibility(View.GONE);
                 }
             }
             else{
-                selectedSongs.remove(song);
-                if(selectedSongs.size() == 0){
-                    selecting = false;
-                }
+                view.performClick();
             }
             return true;
         };
@@ -186,9 +296,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
         return view -> {
             ArrayList<HashMap<String,String>> songs = cacheWorker.getArtistSongs(artistName);
             ArrayList<HashMap<String,String>> albums = cacheWorker.getArtistAlbums(artistName);
-            ArtistFragment artistFragment = new ArtistFragment(artistName,songs,albums); FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.fragment,artistFragment).addToBackStack("artist").commit();
+            ArtistFragment artistFragment = new ArtistFragment(artistName,songs,albums);
+            fragmentTransaction(artistFragment,"artist");
             artist = true;
         };
     }
@@ -198,14 +307,19 @@ public class MainActivity extends AppCompatActivity implements Callback {
             String id = albumMap.get("ID");
             ArrayList<HashMap<String,String>> albumsSongs = cacheWorker.getAlbumSongs(id);
             AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(albumsSongs,getAlbumArt(id),albumMap.get("name"),albumMap.get("artist"));
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.fragment,albumSongsFragment).addToBackStack("album").commit();
+            fragmentTransaction(albumSongsFragment,"album");
             album = true;
         };
     }
 
-
+    public View.OnClickListener getPlaylistOnClickListener(final Playlist playlist){
+        return view->{
+            PlaylistSongsFragment playlistSongsFragment = new PlaylistSongsFragment(playlist);
+            currentPlaylist = playlist;
+            fragmentTransaction(playlistSongsFragment,"playlist");
+            this.playlist = true;
+        };
+    }
 
     public void callback(String songName, String artist, String album){
         songNameTextView.setText(songName);
@@ -239,8 +353,46 @@ public class MainActivity extends AppCompatActivity implements Callback {
         return cacheWorker.getArtistAlbumArt(artist);
     }
 
+    public String getAlbumName(String ID){return cacheWorker.getAlbumName(ID);}
+
+    public String getAlbumID(String name){return cacheWorker.getAlbumID(name);}
+
     public MusicPlayer getMusicPlayer(){
         return musicPlayer;
+    }
+
+    public ArrayList<HashMap<String, String>> getSelectedSongs() {
+        return selectedSongs;
+    }
+
+    public CacheWorker getCacheWorker() {
+        return cacheWorker;
+    }
+
+    public void setCurrentPlaylist(Playlist currentPlaylist) {
+        this.currentPlaylist = currentPlaylist;
+    }
+
+    public void setSelecting(boolean selecting) {
+        this.selecting = selecting;
+    }
+
+    public void setPlaylistSongs(boolean playlistSongs) {
+        this.playlistSongs = playlistSongs;
+    }
+
+    public void fragmentTransaction(Fragment fragment,String name){
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction  fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment,fragment).addToBackStack(name).commit();
+    }
+
+    public boolean checkSelected(HashMap<String,String> song){
+        return selectedSongs.contains(song);
+    }
+
+    public void addToSelectedViews(View view){
+
     }
 
     private void bindService(){
@@ -254,4 +406,20 @@ public class MainActivity extends AppCompatActivity implements Callback {
             bound = false;
         }
     }
+
+    private void select(){
+        select.setVisibility(selecting?View.VISIBLE:View.GONE);
+        playing.setVisibility(selecting?View.GONE:View.VISIBLE);
+    }
+
+    private void unSelect(){
+        for(View view : selectedViews){
+            LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
+            view.setSelected(false);
+            linearLayout.setBackgroundColor(getResources().getColor(R.color.black,null));
+        }
+        selectedSongs.clear();
+        selectedViews.clear();
+    }
+
 }

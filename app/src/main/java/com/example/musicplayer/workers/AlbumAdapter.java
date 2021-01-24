@@ -39,7 +39,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
     public void onBindViewHolder(@NonNull AlbumViewHolder holder, int position) {
         HashMap<String,String> currentAlbum = albums.get(position);
         ImageView albumArt = holder.cardView.findViewById(R.id.album_art);
-        TextView album = holder.cardView.findViewById(R.id.album_name);
+        TextView album = holder.cardView.findViewById(R.id.album);
         TextView artist = holder.cardView.findViewById(R.id.artist);
         String albumID = currentAlbum.get("ID");
         album.setText(currentAlbum.get("name"));

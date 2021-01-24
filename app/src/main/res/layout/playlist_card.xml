@@ -2,7 +2,6 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent" android:layout_height="80dp" >
     <androidx.appcompat.widget.LinearLayoutCompat
-        android:id="@+id/background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
@@ -21,7 +20,7 @@
             android:orientation="vertical"
             android:gravity="center_vertical">
             <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/song"
+                android:id="@+id/playlist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxWidth="280dp"
@@ -29,27 +28,6 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"/>
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/artist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxWidth="280dp"
-                android:text="vdfvv"
-                android:textSize="10dp"
-                android:textColor="@color/white"/>
         </androidx.appcompat.widget.LinearLayoutCompat>
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/duration"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="14:10"
-            android:textSize="12dp"
-            android:layout_gravity="end|center_vertical"
-            android:textAlignment="viewEnd"
-            android:textColor="@color/white"/>
     </androidx.appcompat.widget.LinearLayoutCompat>
-
-
-
-
 </androidx.cardview.widget.CardView>

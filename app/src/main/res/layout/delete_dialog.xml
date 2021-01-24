@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minWidth="420dp"
+    android:background="@color/black"
+    android:gravity="center"
+    android:padding="10dp"
+    android:orientation="vertical"
+    android:layout_gravity="bottom">
+    <TextView
+        android:id="@+id/track_label"
+        android:labelFor="@id/track"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:text="@string/delete_dialog"
+        android:textSize="15sp"
+        android:inputType="none"
+        android:layout_marginBottom="10dp"
+        android:layout_gravity="center_vertical"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/cancel"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:background="@color/black"
+            android:text="@string/cancel"
+            android:textAllCaps="false"
+            android:textColor="@color/blue" />
+        <Button
+            android:id="@+id/delete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/black"
+            android:text="@string/delete"
+            android:textAllCaps="false"
+            android:textColor="@color/blue" />
+    </LinearLayout>
+
+
+</androidx.appcompat.widget.LinearLayoutCompat>

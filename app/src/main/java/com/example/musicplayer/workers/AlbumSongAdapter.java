@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -67,8 +68,9 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             HashMap<String,String> song = songs.get(position);
             TextView track = ((SongViewHolder) holder).cardView.findViewById(R.id.track);
             TextView artist = ((SongViewHolder) holder).cardView.findViewById(R.id.artist);
-            TextView songName = (((SongViewHolder) holder)).cardView.findViewById(R.id.song_name);
+            TextView songName = (((SongViewHolder) holder)).cardView.findViewById(R.id.song);
             TextView duration = (((SongViewHolder) holder)).cardView.findViewById(R.id.duration);
+            LinearLayoutCompat linearLayout = ((SongViewHolder) holder).cardView.findViewById(R.id.background);
             track.setText(song.get("track"));
             if(!song.get("artist").equals(albumArtist)){
                 artist.setText(song.get("artist"));
@@ -76,7 +78,16 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             }
             songName.setText(song.get("title"));
             duration.setText(song.get("duration"));
+            if(!((MainActivity) context).checkSelected(song)){
+                ((SongViewHolder) holder).cardView.setSelected(false);
+                linearLayout.setBackgroundColor(context.getResources().getColor(R.color.black,null));
+            }
+            else{
+                ((SongViewHolder) holder).cardView.setSelected(true);
+                linearLayout.setBackgroundColor(context.getResources().getColor(R.color.blue,null));
+            }
             ((SongViewHolder) holder).bind(((MainActivity)context).getSongOnclickListener(position,songs));
+            ((SongViewHolder) holder).bindOnLongClick(((MainActivity) context).getSongOnLongClickListener(song));
         }
         else{
             TextView disk = ((DiskViewHolder)holder).textView;
@@ -99,6 +110,9 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
         public void bind(View.OnClickListener callback){
             cardView.setOnClickListener(callback);
+        }
+        public void bindOnLongClick(View.OnLongClickListener callback){
+            cardView.setOnLongClickListener(callback);
         }
     }
     public static class DiskViewHolder extends RecyclerView.ViewHolder{
