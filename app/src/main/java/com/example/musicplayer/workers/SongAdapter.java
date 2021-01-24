@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -39,11 +40,20 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         TextView artist = holder.cardView.findViewById(R.id.artist);
         TextView songName = holder.cardView.findViewById(R.id.song);
         TextView duration = holder.cardView.findViewById(R.id.duration);
+        LinearLayoutCompat linearLayout = holder.cardView.findViewById(R.id.background);
         Bitmap album_art = ((MainActivity)context).getAlbumArt(songs.get(position).get("album"));
         albumArt.setImageBitmap(album_art);
         artist.setText(song.get("artist"));
         songName.setText(song.get("title"));
         duration.setText(song.get("duration"));
+        if(!((MainActivity) context).checkSelected(song)){
+            holder.cardView.setSelected(false);
+            linearLayout.setBackgroundColor(context.getResources().getColor(R.color.black,null));
+        }
+        else{
+            holder.cardView.setSelected(true);
+            linearLayout.setBackgroundColor(context.getResources().getColor(R.color.blue,null));
+        }
         holder.bindOnClick(((MainActivity)context).getSongOnclickListener(position,songs));
         holder.bindOnLongClick(((MainActivity) context).getSongOnLongClickListener(song));
     }

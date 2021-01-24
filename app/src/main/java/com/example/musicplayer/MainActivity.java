@@ -2,27 +2,22 @@ package com.example.musicplayer;
 
 import android.Manifest;
 import android.content.ComponentName;
-import android.content.ContentResolver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.provider.MediaStore;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -247,12 +242,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 else{
                     selectedSongs.remove(songs.get(position));
                     selectedViews.remove(view);
-                    if(selectedSongs.size() == 1 && details.getVisibility() == View.GONE){
-                        details.setVisibility(View.VISIBLE);
-                    }
-                    else if(selectedSongs.size() == 0){
-                        selecting = false;
-                        select();
+                    if(!playlistSongs){
+                        if(selectedSongs.size() == 1 && details.getVisibility() == View.GONE){
+                            details.setVisibility(View.VISIBLE);
+                        }
+                        else if(selectedSongs.size() == 0){
+                            selecting = false;
+                            select();
+                        }
                     }
                     linearLayout.setBackgroundColor(getResources().getColor(R.color.black,null));
                 }
@@ -388,6 +385,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction  fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragment,fragment).addToBackStack(name).commit();
+    }
+
+    public boolean checkSelected(HashMap<String,String> song){
+        return selectedSongs.contains(song);
+    }
+
+    public void addToSelectedViews(View view){
+
     }
 
     private void bindService(){
