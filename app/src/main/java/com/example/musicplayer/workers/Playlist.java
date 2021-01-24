@@ -44,18 +44,19 @@ public class Playlist {
         return "";
     }
 
-    public void addSongs(String[]songIDs, Context context){
+    public void addSongs(ArrayList<HashMap<String,String>>songs, Context context){
         ContentResolver contentResolver = context.getContentResolver();
         String[] cols = new String[] {
                 "count(*)"
         };
         final int base = songs.size();
-        ContentValues[] contentValues = new ContentValues[songIDs.length];
-        for(int i = 0;i<songIDs.length;i++){
+        ContentValues[] contentValues = new ContentValues[songs.size()];
+        for(int i = 0;i<songs.size();i++){
             ContentValues contentValue = new ContentValues();
             contentValue.put(MediaStore.Audio.Playlists.Members.PLAY_ORDER, base+i+1);
-            contentValue.put(MediaStore.Audio.Playlists.Members.AUDIO_ID,songIDs[i]);
+            contentValue.put(MediaStore.Audio.Playlists.Members.AUDIO_ID,songs.get(i).get("ID"));
             contentValues[i] = contentValue;
+            this.songs.add(songs.get(i));
         }
         contentResolver.bulkInsert(playlistUri,contentValues);
         contentResolver.notifyChange(Uri.parse("content://media"), null);
@@ -70,6 +71,7 @@ public class Playlist {
             for(int i = 0;i<songs.size();i++){
                 if(songs.get(i).get("ID").equals(id)){
                     positions[count] = i;
+                    break;
                 }
             }
             count++;

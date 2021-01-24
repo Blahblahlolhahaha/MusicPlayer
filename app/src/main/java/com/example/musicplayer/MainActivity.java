@@ -202,6 +202,16 @@ public class MainActivity extends AppCompatActivity implements Callback {
             fragmentManager.popBackStack("artist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             artist = false;
         }
+        else if(playlistSongs){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.popBackStack("select",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            fragmentManager.popBackStack("playlist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            fragmentTransaction(new PlaylistSongsFragment(currentPlaylist),"playlist");
+            playlistSongs = false;
+            selecting = false;
+            select();
+            selectedSongs.clear();
+        }
         else if(selecting){
             selecting = false;
             select();
@@ -216,12 +226,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
             fragmentManager.popBackStack("playlist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             playlist = false;
             currentPlaylist = null;
-        }
-        else if(playlistSongs){
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            fragmentManager.popBackStack("playlist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
-            fragmentTransaction(new PlaylistSongsFragment(currentPlaylist),"playlist");
-            playlistSongs = false;
         }
     }
     
@@ -277,7 +281,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 select();
                 if(playlist){
                     remove.setVisibility(View.VISIBLE);
-                    delete.setVisibility(View.INVISIBLE);
+                    delete.setVisibility(View.GONE);
                 }
             }
             else{

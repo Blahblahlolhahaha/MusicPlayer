@@ -33,11 +33,7 @@ class SelectSongs(val playlist:Playlist): Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val selectedSongs = (requireContext() as MainActivity).selectedSongs
         if(selectedSongs.size != 0){
-            var songIDArray: ArrayList<String> = ArrayList()
-            for (i in 0 until selectedSongs.size) {
-                songIDArray.add(selectedSongs[i]["ID"].toString())
-            }
-            playlist.addSongs(songIDArray.toTypedArray(),context)
+            playlist.addSongs(selectedSongs,context)
         }
         (requireContext() as MainActivity).onBackPressed()
         return true
