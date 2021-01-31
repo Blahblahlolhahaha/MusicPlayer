@@ -30,13 +30,14 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
     @NonNull
     @Override
     public AlbumViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        //creates ViewHolder for each album
         CardView cardView = (CardView) LayoutInflater.from(parent.getContext()).inflate(R.layout.album_card,parent,false);
-        AlbumViewHolder albumViewHolder = new AlbumViewHolder(cardView);
-        return albumViewHolder;
+        return new AlbumViewHolder(cardView);
     }
 
     @Override
     public void onBindViewHolder(@NonNull AlbumViewHolder holder, int position) {
+        //Sets album information on the CardView
         HashMap<String,String> currentAlbum = albums.get(position);
         ImageView albumArt = holder.cardView.findViewById(R.id.album_art);
         TextView album = holder.cardView.findViewById(R.id.album);
@@ -46,12 +47,12 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
         artist.setText(currentAlbum.get("artist"));
         Bitmap album_art = ((MainActivity) context).getAlbumArt(albumID);
         albumArt.setImageBitmap(album_art);
-        holder.bind(((MainActivity)context).getAlbumOnClickListener(currentAlbum));
+        holder.bind(((MainActivity)context).getAlbumOnClickListener(currentAlbum)); //gets the listener for each album
     }
 
     @Override
     public int getItemCount() {
-        return albums.size();
+        return albums.size();//tells adapter how large is the dataset
     }
 
     public static class AlbumViewHolder extends RecyclerView.ViewHolder {
@@ -61,7 +62,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
             cardView = c;
         }
         public void bind(View.OnClickListener callback){
-            cardView.setOnClickListener(callback);
+            cardView.setOnClickListener(callback); //binds listener to the CardView
         }
     }
 }
