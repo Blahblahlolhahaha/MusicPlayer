@@ -1,9 +1,12 @@
 package com.example.musicplayer;
 
 import android.Manifest;
+import android.app.ActivityManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -16,7 +19,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -64,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
     private ArrayList<View> selectedViews = new ArrayList<>();
     private Playlist currentPlaylist;
+    private BroadcastReceiver broadcastReceiver;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,6 +103,23 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 });
                 previous.setOnClickListener(view -> musicPlayer.previous());
                 next.setOnClickListener(view ->musicPlayer.next());
+                if(musicPlayer.getPlayingStatus()){
+                    HashMap<String,String> currentSong = musicPlayer.getCurrentSong();
+                    String songName = currentSong.get("title");
+                    String artist = currentSong.get("artist");
+                    String album = currentSong.get("album");
+                    songNameTextView.setText(songName);
+                    artistTextView.setText(artist);
+                    Bitmap albumArt = getAlbumArt(album);
+                    albumArtView.setImageBitmap(albumArt);
+                    playingFragment.setSongInfo(songName,artist,albumArt);
+                    setLogo(true);
+                }
+            }
+
+            @Override
+            public void onNullBinding(ComponentName name) {
+                Log.d("sada","dead");
             }
 
             @Override
@@ -138,8 +158,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 intent = new Intent(this, MusicPlayer.class);
                 intent.putExtra("songs",selectedSongs);
                 intent.putExtra("start",0);
-                bindService();
-                startService(intent);
+                bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);;
+                startForegroundService(intent);
                 play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
             }
 
@@ -154,6 +174,13 @@ public class MainActivity extends AppCompatActivity implements Callback {
             onBackPressed(); //reset state back to normal
             fragmentTransaction(new PlaylistSongsFragment(currentPlaylist),"playlist"); //refresh the playlist to reflect changes
         });
+        if(isMusicPlayerRunning()){
+            intent = new Intent(this, MusicPlayer.class);
+            intent.setAction("restart_app");
+            bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);
+            startForegroundService(intent);
+
+        }
         fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getPlaylistMap()),"original"); // instantiate first view
     }
 
@@ -276,8 +303,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
                     intent = new Intent(this, MusicPlayer.class);
                     intent.putExtra("songs",songs);
                     intent.putExtra("start",position);
-                    bindService();
-                    startService(intent);
+                    bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);;
+                    startForegroundService(intent);
                     play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
                 }
             }
@@ -415,10 +442,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     }
 
-    private void bindService(){
-        bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);
-    }
-
     private void unbindService(){
         if(bound){
             musicPlayer.registerCallback(null);
@@ -442,6 +465,18 @@ public class MainActivity extends AppCompatActivity implements Callback {
         }
         selectedSongs.clear();
         selectedViews.clear();
+    }
+
+    private boolean isMusicPlayerRunning(){
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (MusicPlayer.class.getName().equals(service.service.getClassName())) {
+                Log.i ("isMyServiceRunning?", true+"");
+                return true;
+            }
+        }
+        Log.i ("isMyServiceRunning?", false+"");
+        return false;
     }
 
 }

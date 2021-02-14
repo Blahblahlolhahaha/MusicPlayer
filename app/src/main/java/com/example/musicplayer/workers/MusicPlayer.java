@@ -22,6 +22,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.media.app.NotificationCompat;
 
+import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 import com.example.musicplayer.interfaces.Callback;
 
@@ -58,6 +59,8 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 case "action_next":
                     next();
                     break;
+                case "action_close":
+                    onDestroy();
                 default:
             }
         }
@@ -79,7 +82,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
             configureMediaSession();
             createMusicPlayer();
         }
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
     public void registerCallback(Callback callback){
         this.callback = callback;
@@ -220,6 +223,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         intent.putExtra("pause",1);
         intent.putExtra("play",2);
         intent.putExtra("next",3);
+        intent.putExtra("close",4);
         //based on playing status, sets the icon for play/pause
         androidx.core.app.NotificationCompat.Action playAction = getPlayingStatus()? new androidx.core.app.NotificationCompat.Action.Builder(
                 R.drawable.pause,
@@ -251,9 +255,14 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 .addAction(new androidx.core.app.NotificationCompat.Action.Builder(R.drawable.previous,"previous",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("previous",0),intent.setAction("action_previous"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
                 .addAction(playAction)
                 .addAction(new androidx.core.app.NotificationCompat.Action.Builder(R.drawable.next,"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("next",0),intent.setAction("action_next"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
+                .addAction(new androidx.core.app.NotificationCompat.Action.Builder(R.drawable.close,"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("close",0),intent.setAction("action_close"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
                 .build();
+        startForeground(10000,notification);
+//        notificationManager.notify(10000,notification);
+    }
 
-        notificationManager.notify(10000,notification);
+    public HashMap<String,String> getCurrentSong(){
+        return songs.get(current);
     }
 
     private void createMusicPlayer(){
@@ -354,7 +363,21 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        notificationManager.cancel(10000);
+        if(!mediaPlayer.isPlaying()){
+            stopForeground(true);
+        }
         super.onTaskRemoved(rootIntent);
+    }
+
+    @Override
+    public void onDestroy() {
+        mediaPlayer.stop();
+        mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                .setState(PlaybackStateCompat.STATE_STOPPED,0,1.0f)
+                .build()
+        );
+        stopForeground(true);
+        super.onDestroy();
     }
 }
