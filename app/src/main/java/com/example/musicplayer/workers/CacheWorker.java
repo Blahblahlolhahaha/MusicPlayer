@@ -13,6 +13,8 @@ import android.util.LruCache;
 import com.example.musicplayer.R;
 import com.jakewharton.disklrucache.DiskLruCache;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -37,10 +39,10 @@ public class CacheWorker {
         this.context = context;
         getSongs();
         File diskCache = new File(cacheDirectory);
-        new InitDiskCacheTask().execute(diskCache);
+        initDiskCache(diskCache);
         albumArtCache = new LruCache<>(1024*1024*100);
         this.context = context;
-        new BitmapWorkerTask().execute(songManager.getSongs());
+        new BitmapWorkerTask().execute(songManager.getAlbums());
     }
 
     public ArrayList<HashMap<String,String>> getAlbumMap(){
@@ -144,14 +146,8 @@ public class CacheWorker {
         }
         try{
             DiskLruCache.Editor editor = cache.edit(album);
-
-            ByteBuffer byteBuffer =  ByteBuffer.allocate(albumArt.getByteCount());
-            albumArt.copyPixelsToBuffer(byteBuffer);
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(editor.newOutputStream(0));
-            byte[] yes = byteBuffer.array();
-            objectOutputStream.writeObject(yes);
+            albumArt.compress(Bitmap.CompressFormat.PNG,100,editor.newOutputStream(0));
             editor.commit();
-            byteBuffer.clear();
 
         }catch(IOException e){
             e.printStackTrace();
@@ -172,8 +168,8 @@ public class CacheWorker {
                     DiskLruCache.Snapshot snapshot = cache.get(album);
                     if(snapshot == null){return null;}
                     byte[] yes = new byte[(int) snapshot.getLength(0)];
-                    ObjectInputStream objectInputStream = new ObjectInputStream(snapshot.getInputStream(0));
-                    objectInputStream.read(yes);
+                    BufferedInputStream objectInputStream = new BufferedInputStream(snapshot.getInputStream(0));
+                    objectInputStream.read(yes,0,yes.length);
                     objectInputStream.close();
                     return BitmapFactory.decodeByteArray(yes,0,yes.length);
                 }catch(IOException e){
@@ -183,42 +179,52 @@ public class CacheWorker {
             return null;
         }
     }
-
-    private class InitDiskCacheTask extends AsyncTask<File,Void,Void> {
-
-        @Override
-        protected Void doInBackground(File... files) {
-            synchronized (cacheLock){
-                File cacheDir = files[0];
-                try {
-                    int DISK_CACHE_SIZE = 1024 * 1024 * 100;
-                    cache = DiskLruCache.open(cacheDir,1,1, DISK_CACHE_SIZE);
-                    cacheLock.notifyAll();
-                    initialising = false;
-                } catch (IOException e) {
-                    e.printStackTrace();
+    void initDiskCache(File cacheDir){
+        class InitDiskCacheTask implements Runnable{
+            final File cacheDir;
+            InitDiskCacheTask(File cacheDir){
+                this.cacheDir = cacheDir;
+            }
+            @Override
+            public void run() {
+                synchronized (cacheLock){
+                    try {
+                        int DISK_CACHE_SIZE = 1024 * 1024 * 100;
+                        cache = DiskLruCache.open(cacheDir,1,1, DISK_CACHE_SIZE);
+                        cacheLock.notifyAll();
+                        initialising = false;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
-            return null;
         }
+        Thread t = new Thread(new InitDiskCacheTask(cacheDir));
+        t.start();
     }
+
 
     private class BitmapWorkerTask extends AsyncTask<ArrayList<HashMap<String,String>>,Void,Void>{
         @SafeVarargs
         @Override
-        protected final Void doInBackground(ArrayList<HashMap<String, String>>... songs) {
-            if(songs != null){
-                for (HashMap<String,String> song:songs[0]
+        protected final Void doInBackground(ArrayList<HashMap<String, String>>... albums) {
+            if(albums != null){
+                for (HashMap<String,String> album:albums[0]
                 ) {
-                    String album = song.get("album");
-                    if(albumArtCache.get(album) == null){
-                        Bitmap albumArt = getCache(album);
+                    String albumID = album.get("ID");
+                    if(albumArtCache.get(albumID) == null){
+                        Bitmap albumArt = getCache(albumID);
                         if(albumArt == null){
                             MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
                             try{
-                                mediaMetadataRetriever.setDataSource(song.get("data"));
+                                for (HashMap<String,String>song:
+                                        songManager.getSongs()) {
+                                    if(song.get("album").equals(albumID)){
+                                        mediaMetadataRetriever.setDataSource(song.get("data"));
+                                    }
+                                }
                             }catch(RuntimeException e){
-                                Log.d("sad", "doInBackground: sad".concat(String.valueOf(song)));
+                                Log.d("sad", "doInBackground: sad");
                             }
 
                             byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
@@ -228,12 +234,12 @@ public class CacheWorker {
                             else{
                                 albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
                             }
-                            albumArtCache.put(album,albumArt);
-                            storeCache(albumArt,song.get("album"));
+                            albumArtCache.put(albumID,albumArt);
+                            storeCache(albumArt,albumID);
                             mediaMetadataRetriever.close();
                         }
 
-                        albumArtCache.put(album,albumArt);
+                        albumArtCache.put(albumID,albumArt);
                     }
                 }
             }
@@ -241,6 +247,7 @@ public class CacheWorker {
             return null;
         }
     }
+
     private void getSongs(){
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
         String[] projection = {
@@ -372,7 +379,7 @@ public class CacheWorker {
         songManager = new SongManager(songs,albums,artists,playlists);
     }
 
-    private class SortSongs implements Comparator<Map<String, String>>
+    private static class SortSongs implements Comparator<Map<String, String>>
     {
         private final String key;
 
