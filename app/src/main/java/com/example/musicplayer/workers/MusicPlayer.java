@@ -45,6 +45,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent.getAction()!=null){
             switch (intent.getAction()){
+                //based on action provided in intent, does the corresponding action
                 case "action_previous":
                     previous();
                     break;
@@ -61,15 +62,17 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
             }
         }
         else{
+            //if newly started
             mediaSession = new MediaSessionCompat(getApplicationContext(),"mediaSession");
             Bundle bundle = intent.getExtras();
-            original = (ArrayList<HashMap<String, String>>) bundle.get("songs");
-            songs = (ArrayList<HashMap<String, String>>) original.clone();
-            int start = bundle.getInt("start");
+            original = (ArrayList<HashMap<String, String>>) bundle.get("songs");//get song list
+            songs = (ArrayList<HashMap<String, String>>) original.clone();//clone cos pass-by-value is kinda sad
+            int start = bundle.getInt("start");//check starting position for song
             shuffle = getSharedPreferences("settings",0).getBoolean("shuffle",false);
             repeat = getSharedPreferences("settings",0).getString("repeat","no");
             current = start;
             if(shuffle){
+                // if shuffle, shuffle the queue
                 shuffle();
             }
             createNotificationChannel();
@@ -89,6 +92,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
 
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
+        //starts the song
         mediaPlayer.start();
         callback.callback(songs.get(current).get("title"),songs.get(current).get("artist"),songs.get(current).get("album"));
     }
@@ -120,8 +124,9 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
                 .setState(PlaybackStateCompat.STATE_PLAYING,0,1.0f)
                 .build()
-        );
+        );//sets playback state as playing to show correct actions on lock screen
     }
+    //For next few functions, to change song, need stop mediaPlayer to prevent clashes
     public void next(){
         mediaPlayer.stop();
         mediaPlayer.release();
@@ -145,17 +150,20 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
     @SuppressWarnings("unchecked")
     public boolean setShuffle() {
+        //sets shuffle state
         SharedPreferences.Editor editor = getSharedPreferences("settings",0).edit();
         editor.putBoolean("shuffle", !shuffle);
         editor.apply();
         shuffle = !shuffle;
         if(shuffle){
+            //shuffle queue
             shuffle();
         }
         else{
+            //if shuffle is unset, returns songs to original position b4 shuffling by using the clone
             HashMap<String,String> current_song = songs.get(current);
             songs = (ArrayList<HashMap<String, String>>) original.clone();
-            current = songs.indexOf(current_song);
+            current = songs.indexOf(current_song);//get position of current song
         }
         return shuffle;
     }
@@ -165,6 +173,12 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
 
     public String setRepeat(){
+        /*
+        Repeat status:
+        no: no repeat
+        repeat: repeat queue
+        track: repeat current track
+         */
         SharedPreferences.Editor editor = getSharedPreferences("settings",0).edit();
         switch (repeat){
             case "no":
@@ -185,6 +199,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
 
     public void shuffle(){
+        //shuffles list and sets current song as first song
         HashMap<String,String> current_song = songs.get(current);
         songs.remove(current);
         Collections.shuffle(songs);
@@ -195,15 +210,17 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
 
     public void createNotification(){
+        //creates a notification to show and provide controls
         notificationManager = NotificationManagerCompat.from(this);
         MediaControllerCompat mediaController = mediaSession.getController();
-        MediaMetadataCompat mediaMetadata = mediaController.getMetadata();
+        MediaMetadataCompat mediaMetadata = mediaController.getMetadata();//gets metadata of the song to show in notification
         NotificationCompat.MediaStyle mediaStyle = new NotificationCompat.MediaStyle().setMediaSession(mediaSession.getSessionToken());
         Intent intent = new Intent( getApplicationContext(), MusicPlayer.class );
         intent.putExtra("previous",0);
         intent.putExtra("pause",1);
         intent.putExtra("play",2);
         intent.putExtra("next",3);
+        //based on playing status, sets the icon for play/pause
         androidx.core.app.NotificationCompat.Action playAction = getPlayingStatus()? new androidx.core.app.NotificationCompat.Action.Builder(
                 R.drawable.pause,
                 "pause",
@@ -225,7 +242,6 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
 
         Notification notification = new androidx.core.app.NotificationCompat.Builder(getApplicationContext(),"MusicPlayer")
                 .setContentTitle(mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE))
-                .setContentTitle(mediaMetadata.getString(MediaMetadata.METADATA_KEY_TITLE))
                 .setSubText(mediaMetadata.getString(MediaMetadata.METADATA_KEY_ARTIST))
                 .setLargeIcon(mediaMetadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART))
                 .setSmallIcon(R.drawable.ic_launcher_background)
@@ -241,18 +257,20 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
 
     private void createMusicPlayer(){
-        HashMap<String,String> currentSong = songs.get(current);
+        //Creates musicPlayer for playing songs
+        HashMap<String,String> currentSong = songs.get(current);//get current song
         mediaPlayer = MediaPlayer.create(getApplicationContext(), Uri.parse(currentSong.get("data")));
-        mediaPlayer.setOnPreparedListener(this);
+        mediaPlayer.setOnPreparedListener(this);//play song
         mediaPlayer.setOnCompletionListener(mediaPlayer1 -> {
+            //when finished plays next song based on repeat status
             mediaPlayer1.release();
-            current = repeat.equals("track")? current:current + 1;
+            current = repeat.equals("track")? current:current + 1; //repeat current song
             if(current == songs.size()){
                 if(repeat.equals("repeat")){
-                    current = 0;
+                    current = 0;//goes back to first song
                 }
                 else{
-                    stopSelf();
+                    stopSelf();//stops playing song
                 }
             }
             createMusicPlayer();
@@ -265,6 +283,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
     @SuppressWarnings("unchecked")
     public void reset(int position,ArrayList<HashMap<String, String>> newSongs){
+        //plays new song list at a position
         original = (ArrayList<HashMap<String, String>>) newSongs.clone();
         songs = (ArrayList<HashMap<String, String>>) original.clone();
         playAnotherSong(position);
@@ -277,7 +296,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     }
     private void configureMediaSession(){
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
-
+            //set methods to manage controls from the lock screen
             @Override
             public void onSeekTo(long pos) {
                 mediaPlayer.seekTo((int)pos);
@@ -322,9 +341,10 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         mediaSession.setActive(true);
     }
     private void createNotificationChannel(){
+        //create noti channel for the song
         String channelName = "MusicPlayer";
         String description = "Play music!";
-        int importance = NotificationManager.IMPORTANCE_LOW;
+        int importance = NotificationManager.IMPORTANCE_LOW;//prevents vibration when a new song plays
         NotificationChannel notificationChannel  = new NotificationChannel(channelName,channelName,importance);
         notificationChannel.setDescription(description);
         notificationChannel.setVibrationPattern(null);

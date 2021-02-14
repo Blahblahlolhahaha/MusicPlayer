@@ -28,7 +28,7 @@ class ArtistsAdapter(val artists: ArrayList<HashMap<String,String>>, val context
         artistTextView.setText(artist.get("name"))
         val trackAlbum: String = String.format("%s tracks| %s albums",artist.get("tracks"),artist.get("albums"))
         trackAlbumTextView.setText(trackAlbum);
-        val albumArt: Bitmap = (context as MainActivity).getArtistAlbumArt(artist.get("name"))
+        val albumArt: Bitmap = (context as MainActivity).getArtistAlbumArt(artist.get("name"))//get album art based on first song of artist
         albumArtView.setImageBitmap(albumArt)
         holder.bind(context.getArtistOnClickListener(artist.get("name")))
     }

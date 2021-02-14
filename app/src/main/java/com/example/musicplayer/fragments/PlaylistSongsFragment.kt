@@ -1,13 +1,11 @@
 package com.example.musicplayer.fragments
 
 import android.app.Dialog
-import android.content.ContentResolver
 import android.content.ContentUris
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.*
 import android.widget.Button
-import android.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -43,7 +41,7 @@ class PlaylistSongsFragment(val playlist:Playlist):Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
             R.id.addd ->{
-                (context as MainActivity).fragmentTransaction(SelectSongs(playlist),"select")
+                (context as MainActivity).fragmentTransaction(SelectSongsFragment(playlist),"select")
                 (context as MainActivity).setPlaylistSongs(true)
             }
             R.id.delete->{

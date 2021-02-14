@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         serviceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+                // get music player from the service to control from main activity through the buttons
                 MusicPlayer.MusicPlayerBinder binder = (MusicPlayer.MusicPlayerBinder) iBinder;
                 musicPlayer = binder.getService();
                 musicPlayer.registerCallback(MainActivity.this);
@@ -110,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         cacheWorker = new CacheWorker(getApplicationContext(),getCacheDir()+File.separator+"albumArt");
         playing.setOnClickListener(view -> {
             if(!songNameTextView.getText().toString().equals("No music playing!")){
+                // go to playing fragment if there is no music playing
                 fragmentTransaction(playingFragment,"yes");
                 playing.setVisibility(View.GONE);
                 isPlaying = true;
@@ -123,11 +125,12 @@ public class MainActivity extends AppCompatActivity implements Callback {
             select.setVisibility(View.GONE);
         });
         delete.setOnClickListener(view->{
-            new DeleteDialog(selectedSongs).showDialog(MainActivity.this);
-            selectedSongs.clear();
-            select();
+            new DeleteDialog(selectedSongs).showDialog(MainActivity.this); //show dialog for confirmation to delete
+            selectedSongs.clear(); // clear the selected array after deleting/cancelling
+            select(); // revert back to original view
         });
         playSelected.setOnClickListener(view->{
+            //play selected songs
             if(musicPlayer!=null){
                 musicPlayer.reset(0,selectedSongs);
             }
@@ -142,23 +145,25 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
         });
         remove.setOnClickListener(view -> {
+            //remove songs from playlist based on ID
             String[]IDs = new String[selectedSongs.size()];
             for(int i = 0; i<IDs.length;i++){
                 IDs[i] = selectedSongs.get(i).get("ID");
             }
-            this.currentPlaylist.removeSongs(IDs,getApplicationContext());
-            onBackPressed();
-            fragmentTransaction(new PlaylistSongsFragment(currentPlaylist),"playlist");
+            this.currentPlaylist.removeSongs(IDs,getApplicationContext()); // songs are removed here
+            onBackPressed(); //reset state back to normal
+            fragmentTransaction(new PlaylistSongsFragment(currentPlaylist),"playlist"); //refresh the playlist to reflect changes
         });
-        fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getPlaylistMap()),"original");
+        fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getPlaylistMap()),"original"); // instantiate first view
     }
 
     public void isStoragePermissionGranted() {
+        //check for read/write permissions
         if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED) {
             Log.v(LOG_TAG,"Permission is granted");
         } else {
-
+            //if not granted, request permission
             Log.v(LOG_TAG,"Permission is revoked");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
         }
@@ -166,7 +171,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 == PackageManager.PERMISSION_GRANTED) {
             Log.v(LOG_TAG,"Permission is granted");
         } else {
-
+            //if not granted, request permission
             Log.v(LOG_TAG,"Permission is revoked");
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
@@ -174,6 +179,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        //request for required permission
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
             Log.v(LOG_TAG,"Permission: "+permissions[0]+ "was "+grantResults[0]);
@@ -182,23 +188,24 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     @Override
     public void onBackPressed() {
-        if(isPlaying){
+        //checks for fragment app is in now and execute the required actions
+        if(isPlaying){ //if at playingFragment
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.popBackStack("yes",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             playing.setVisibility(View.VISIBLE);
             isPlaying = false;
         }
-        else if(album){
+        else if(album){ //if at albumSongsFragment
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.popBackStack("album",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             album = false;
         }
-        else if(artist){
+        else if(artist){ //if at artistFragment
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.popBackStack("artist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             artist = false;
         }
-        else if(playlistSongs){
+        else if(playlistSongs){//if at selectSongsFragment
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.popBackStack("select",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             fragmentManager.popBackStack("playlist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -208,16 +215,16 @@ public class MainActivity extends AppCompatActivity implements Callback {
             select();
             unSelect();
         }
-        else if(selecting){
+        else if(selecting){// if selecting songs
             selecting = false;
             select();
             unSelect();
         }
-        else if(viewing){
+        else if(viewing){//if at DetailsEditFragment
            Intent i = new Intent(this,MainActivity.class);
            startActivity(i);
         }
-        else if(playlist){
+        else if(playlist){//if at playlistSongsFragment
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.popBackStack("playlist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             playlist = false;
@@ -227,6 +234,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
     
     public View.OnClickListener getSongOnclickListener(int position, ArrayList<HashMap<String,String>> songs){
         return view -> {
+            //checks whether if user is selecting songs or not. If selecting, selects/unselects the song based on whether it has already be selected or not
+            // else, play chosen song
             if(selecting){
                 LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
                 boolean selected = view.isSelected();
@@ -235,30 +244,35 @@ public class MainActivity extends AppCompatActivity implements Callback {
                     selectedSongs.add(songs.get(position));
                     selectedViews.add(view);
                     if(selectedSongs.size() > 1 && details.getVisibility() != View.GONE){
+                        //removes details button when more than one song selected
                         details.setVisibility(View.GONE);
                     }
-                    linearLayout.setBackgroundColor(getResources().getColor(R.color.blue,null));
+                    linearLayout.setBackgroundColor(getResources().getColor(R.color.blue,null)); //change background to blue to indicate song is selected
                 }
                 else{
                     selectedSongs.remove(songs.get(position));
                     selectedViews.remove(view);
                     if(!playlistSongs){
                         if(selectedSongs.size() == 1 && details.getVisibility() == View.GONE){
+                            //shows editing choice if only one song is selected
                             details.setVisibility(View.VISIBLE);
                         }
                         else if(selectedSongs.size() == 0){
+                            //exits selecting mode when all songs are deselected
                             selecting = false;
                             select();
                         }
                     }
-                    linearLayout.setBackgroundColor(getResources().getColor(R.color.black,null));
+                    linearLayout.setBackgroundColor(getResources().getColor(R.color.black,null)); //change background to black to indicate song is unselected
                 }
             }
             else{
                 if(musicPlayer!=null){
+                    //resets music player if there is a song playing already
                     musicPlayer.reset(position,songs);
                 }
                 else{
+                    //creates a new music player if not playing any song yet
                     intent = new Intent(this, MusicPlayer.class);
                     intent.putExtra("songs",songs);
                     intent.putExtra("start",position);
@@ -272,6 +286,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public View.OnLongClickListener getSongOnLongClickListener(HashMap<String,String> song){
         return view -> {
+            //if user long clicks, enters selecting mode if not in it already else will have same effect as clicking
             if(!selecting){
                 LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
                 view.setSelected(true);
@@ -294,6 +309,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public View.OnClickListener getArtistOnClickListener(String artistName){
         return view -> {
+            //goes into artistFragment with selected artist
             ArrayList<HashMap<String,String>> songs = cacheWorker.getArtistSongs(artistName);
             ArrayList<HashMap<String,String>> albums = cacheWorker.getArtistAlbums(artistName);
             ArtistFragment artistFragment = new ArtistFragment(artistName,songs,albums);
@@ -304,6 +320,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public View.OnClickListener getAlbumOnClickListener(final HashMap<String,String> albumMap){
         return view -> {
+            //goes into AlbumSongsFragment with selected album
             String id = albumMap.get("ID");
             ArrayList<HashMap<String,String>> albumsSongs = cacheWorker.getAlbumSongs(id);
             AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(albumsSongs,getAlbumArt(id),albumMap.get("name"),albumMap.get("artist"));
@@ -314,6 +331,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public View.OnClickListener getPlaylistOnClickListener(final Playlist playlist){
         return view->{
+            //goes into PlaylistSongsFragment with selected playlist
             PlaylistSongsFragment playlistSongsFragment = new PlaylistSongsFragment(playlist);
             currentPlaylist = playlist;
             fragmentTransaction(playlistSongsFragment,"playlist");
@@ -322,6 +340,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     }
 
     public void callback(String songName, String artist, String album){
+        // callback for MusicPlayer to load song information for notification
         songNameTextView.setText(songName);
         artistTextView.setText(artist);
         Bitmap albumArt = getAlbumArt(album);
@@ -382,6 +401,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     }
 
     public void fragmentTransaction(Fragment fragment,String name){
+        //does transaction of fragments
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction  fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragment,fragment).addToBackStack(name).commit();
@@ -408,11 +428,13 @@ public class MainActivity extends AppCompatActivity implements Callback {
     }
 
     private void select(){
+        //goes into/exits selecting mode
         select.setVisibility(selecting?View.VISIBLE:View.GONE);
         playing.setVisibility(selecting?View.GONE:View.VISIBLE);
     }
 
     private void unSelect(){
+        //after exiting selecting mode, revert all the views back to normal
         for(View view : selectedViews){
             LinearLayoutCompat linearLayout = view.findViewById(R.id.background);
             view.setSelected(false);
