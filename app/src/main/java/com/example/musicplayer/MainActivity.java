@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
                     artistTextView.setText(artist);
                     Bitmap albumArt = getAlbumArt(album);
                     albumArtView.setImageBitmap(albumArt);
-                    playingFragment.setSongInfo(songName,artist,albumArt);
+                    playingFragment.setSongInfo(songName,artist,albumArt,currentSong.get("duration"));
                     setLogo(true);
                 }
             }
@@ -366,13 +366,15 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
-    public void callback(String songName, String artist, String album){
+    public void callback(String songName, String artist, String album, String duration){
         // callback for MusicPlayer to load song information for notification
         songNameTextView.setText(songName);
         artistTextView.setText(artist);
         Bitmap albumArt = getAlbumArt(album);
         albumArtView.setImageBitmap(albumArt);
-        playingFragment.setSongInfo(songName,artist,albumArt);
+        playingFragment.setSongInfo(songName,artist,albumArt,duration);
+        playingFragment.resetSeekBar();
+        playingFragment.startThread();
         mediaSession.setMetadata(new MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE,songName)
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST,artist)

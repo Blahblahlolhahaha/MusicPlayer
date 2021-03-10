@@ -1,6 +1,7 @@
 package com.example.musicplayer.workers;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -250,17 +251,33 @@ public class CacheWorker {
 
     private void getSongs(){
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
-        String[] projection = {
-                MediaStore.Audio.Media._ID,
-                MediaStore.Audio.Media.TITLE,
-                MediaStore.Audio.Media.DATA,
-                MediaStore.Audio.Media.DISPLAY_NAME,
-                MediaStore.Audio.Media.ARTIST_ID,
-                MediaStore.Audio.Media.ALBUM_ID,
-                MediaStore.Audio.Media.DURATION,
-                MediaStore.Audio.Media.YEAR,
-                MediaStore.Audio.Media.TRACK
-        };
+
+        String[] projection;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            projection = new String[]{
+                    MediaStore.Audio.Media._ID,
+                    MediaStore.Audio.Media.TITLE,
+                    MediaStore.Audio.Media.DATA,
+                    MediaStore.Audio.Media.DISPLAY_NAME,
+                    MediaStore.Audio.Media.ARTIST_ID,
+                    MediaStore.Audio.Media.ALBUM_ID,
+                    MediaStore.Audio.Media.YEAR,
+                    MediaStore.Audio.Media.TRACK,
+                    MediaStore.Audio.Media.DURATION,
+            };
+        }
+        else{
+            projection = new String[]{
+                    MediaStore.Audio.Media._ID,
+                    MediaStore.Audio.Media.TITLE,
+                    MediaStore.Audio.Media.DATA,
+                    MediaStore.Audio.Media.DISPLAY_NAME,
+                    MediaStore.Audio.Media.ARTIST_ID,
+                    MediaStore.Audio.Media.ALBUM_ID,
+                    MediaStore.Audio.Media.YEAR,
+                    MediaStore.Audio.Media.TRACK
+            };
+        }
         String[] projection1 = {
                 MediaStore.Audio.Albums._ID, MediaStore.Audio.Albums.ALBUM,MediaStore.Audio.Albums.ARTIST
         };
@@ -332,9 +349,8 @@ public class CacheWorker {
                 }
             }
             song.put("album",cursor.getString(5));
-            song.put("duration",formatDuration(Long.parseLong(cursor.getString(6))));
-            song.put("year",cursor.getString(7));
-            String track = cursor.getString(8);
+            song.put("year",cursor.getString(6));
+            String track = cursor.getString(7);
             if(track.length() == 4){
                 String disc = track.substring(0,1);
                 String trackNum = String.valueOf(Integer.parseInt(track.substring(1)));
@@ -343,6 +359,15 @@ public class CacheWorker {
             }
             else{
                 song.put("track",track);
+            }
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                song.put("duration",formatDuration(Long.parseLong(cursor.getString(8))));
+            }
+            else{
+                MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+                mmr.setDataSource(song.get("data"));
+                String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                song.put("duration",duration);
             }
             songs.add(song);
         }
