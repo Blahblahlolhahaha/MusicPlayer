@@ -97,7 +97,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     public void onPrepared(MediaPlayer mediaPlayer) {
         //starts the song
         mediaPlayer.start();
-        callback.callback(songs.get(current).get("title"),songs.get(current).get("artist"),songs.get(current).get("album"));
+        callback.callback(songs.get(current).get("title"),songs.get(current).get("artist"),songs.get(current).get("album"),songs.get(current).get("duration"));
     }
 
     public class MusicPlayerBinder extends Binder{
@@ -109,6 +109,13 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     public boolean getPlayingStatus(){
         return mediaPlayer.isPlaying();
     }
+
+    public int getPosition(){
+        return mediaPlayer.getCurrentPosition();
+    }
+
+    public void setPosition(int position){ mediaPlayer.seekTo(position);}
+
     public void pause(){
         mediaPlayer.pause();
         callback.setLogo(false);

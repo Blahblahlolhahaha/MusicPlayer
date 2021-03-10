@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,13 +22,22 @@ import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 import com.example.musicplayer.workers.MusicPlayer;
 
+import org.w3c.dom.Text;
+
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+
 public class PlayingFragment extends Fragment {
-    private TextView artistTextView,songNameTextView;
+    private TextView artistTextView,songNameTextView,end;
     private ImageView albumArtView;
     private ImageButton play;
     private String artist,song;
+    private long max;
     private Bitmap albumArt;
-
+    private SeekBar seekBar;
+    private Thread thread;
+    private boolean stop;
+    private MusicPlayer musicPlayer;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -45,12 +55,19 @@ public class PlayingFragment extends Fragment {
         ImageButton next = view.findViewById(R.id.playing_next);
         ImageButton repeat = view.findViewById(R.id.playing_repeat);
         ImageButton shuffle = view.findViewById(R.id.playing_shuffle);
+        seekBar = view.findViewById(R.id.seek_bar);
+        TextView start = view.findViewById(R.id.start);
+        end = view.findViewById(R.id.end);
         artistTextView.setText(artist);
         songNameTextView.setText(song);
         albumArtView.setImageBitmap(albumArt);
-        MusicPlayer musicPlayer = ((MainActivity)getContext()).getMusicPlayer();
+        musicPlayer = ((MainActivity)getContext()).getMusicPlayer();
+        thread = new PositionThread();
         if(musicPlayer.getPlayingStatus()){
             play.setBackground(ContextCompat.getDrawable(getContext().getApplicationContext(),R.drawable.pause));
+            seekBar.setMax((int) max);
+            end.setText(formatDuration(max));
+            startThread();
         }
         else{
             play.setBackground(ContextCompat.getDrawable(getContext().getApplicationContext(),R.drawable.play));
@@ -63,6 +80,7 @@ public class PlayingFragment extends Fragment {
             else{
                 play.setBackground(ContextCompat.getDrawable(getContext().getApplicationContext(),R.drawable.pause));
                 musicPlayer.play();
+                startThread();
             }
         });
         previous.setOnClickListener(view0 -> musicPlayer.previous());
@@ -88,17 +106,77 @@ public class PlayingFragment extends Fragment {
                     break;
             }
         });
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                start.setText(formatDuration(seekBar.getProgress()));
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                musicPlayer.setPosition(seekBar.getProgress());
+            }
+        });
     }
-    public void setSongInfo(String songName, String artist, Bitmap album){
+    public void setSongInfo(String songName, String artist, Bitmap album,String duration){
         song = songName;
         this.artist = artist;
         this.albumArt = album;
+
+        max = formatTime(duration);
         if(songNameTextView != null){
             songNameTextView.setText(songName);
             artistTextView.setText(artist);
             albumArtView.setImageBitmap(album);
+            seekBar.setMax((int) max);
+            end.setText(duration);
         }
-
+    }
+    public void startThread(){
+        if(thread != null){
+            thread.interrupt();
+            thread = new PositionThread();
+            thread.start();
+        }
     }
 
+    public void resetSeekBar(){
+        if(seekBar != null){
+            seekBar.setProgress(0);
+        }
+    }
+
+    private String formatDuration(long duration) {
+        long minutes = TimeUnit.MINUTES.convert(duration, TimeUnit.MILLISECONDS);
+        long seconds = TimeUnit.SECONDS.convert(duration, TimeUnit.MILLISECONDS)
+                - minutes * TimeUnit.SECONDS.convert(1, TimeUnit.MINUTES);
+
+        return String.format(Locale.ENGLISH,"%02d:%02d", minutes, seconds);
+    }
+
+    private long formatTime(String duration){
+        String[] minSec = duration.split(":");
+        return (long)(Integer.parseInt(minSec[0]) * 60 * 1000 + Integer.parseInt(minSec[1]) * 1000);
+    }
+
+    private class PositionThread extends Thread {
+        @Override
+        public void run() {
+            while(musicPlayer.getPlayingStatus()){
+                if(!stop){
+                    int position = musicPlayer.getPosition();
+                    seekBar.setProgress(position);
+                }
+                else{
+                    break;
+                }
+            }
+        }
+    }
 }
