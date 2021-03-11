@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.MediaMetadataCompat;
@@ -306,7 +307,12 @@ public class MainActivity extends AppCompatActivity implements Callback {
                     intent.putExtra("songs",songs);
                     intent.putExtra("start",position);
                     bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);;
-                    startForegroundService(intent);
+                    if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.N_MR1) {
+                        startForegroundService(intent);
+                    }
+                    else{
+                        startService(intent);
+                    }
                     play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
                 }
             }

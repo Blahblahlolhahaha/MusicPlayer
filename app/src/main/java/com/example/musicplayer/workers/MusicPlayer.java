@@ -11,6 +11,7 @@ import android.media.MediaMetadata;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.MediaMetadataCompat;
@@ -19,6 +20,7 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.media.app.NotificationCompat;
 
@@ -78,7 +80,9 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 // if shuffle, shuffle the queue
                 shuffle();
             }
-            createNotificationChannel();
+            if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+                createNotificationChannel();
+            }
             configureMediaSession();
             createMusicPlayer();
         }
@@ -356,6 +360,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
 
         mediaSession.setActive(true);
     }
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void createNotificationChannel(){
         //create noti channel for the song
         String channelName = "MusicPlayer";
