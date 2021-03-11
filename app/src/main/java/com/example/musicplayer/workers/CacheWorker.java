@@ -237,7 +237,10 @@ public class CacheWorker {
                             }
                             albumArtCache.put(albumID,albumArt);
                             storeCache(albumArt,albumID);
-                            mediaMetadataRetriever.close();
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                                mediaMetadataRetriever.close();
+                            }
+
                         }
 
                         albumArtCache.put(albumID,albumArt);
@@ -367,7 +370,7 @@ public class CacheWorker {
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever();
                 mmr.setDataSource(song.get("data"));
                 String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                song.put("duration",duration);
+                song.put("duration",formatDuration(Long.parseLong(duration)));
             }
             songs.add(song);
         }

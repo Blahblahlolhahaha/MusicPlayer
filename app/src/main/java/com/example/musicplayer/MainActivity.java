@@ -161,7 +161,9 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);;
                 startForegroundService(intent);
                 play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
+
             }
+            this.onBackPressed();
 
         });
         remove.setOnClickListener(view -> {
