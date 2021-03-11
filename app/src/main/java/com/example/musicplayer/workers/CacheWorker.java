@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.LruCache;
@@ -234,6 +235,9 @@ public class CacheWorker {
                             }
                             else{
                                 albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
+                                if(albumArt == null){
+                                    albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
+                                }
                             }
                             albumArtCache.put(albumID,albumArt);
                             storeCache(albumArt,albumID);
@@ -344,24 +348,42 @@ public class CacheWorker {
             song.put("title",cursor.getString(1));
             song.put("data",cursor.getString(2));
             song.put("display_name",cursor.getString(3));
-            String ID = cursor.getString(4);
-            for(HashMap<String,String>artist
-                    :artists){
-                if(artist.get("ID").equals(ID)){
-                    song.put("artist",artist.get("name"));
+            if(cursor.getString(4) != null){
+                String ID = cursor.getString(4);
+                for(HashMap<String,String>artist
+                        :artists){
+                    if(artist.get("ID").equals(ID)){
+                        song.put("artist",artist.get("name"));
+                    }
                 }
             }
-            song.put("album",cursor.getString(5));
+            else{
+                song.put("artist","Unknown");
+            }
+            song.put("album",cursor.getString(5)==null?"Unknown":cursor.getString(5));
             song.put("year",cursor.getString(6));
             String track = cursor.getString(7);
-            if(track.length() == 4){
-                String disc = track.substring(0,1);
-                String trackNum = String.valueOf(Integer.parseInt(track.substring(1)));
-                song.put("disc",disc);
-                song.put("track",trackNum);
+            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+                if(track.length() == 4){
+                    String disc = track.substring(0,1);
+                    String trackNum = String.valueOf(Integer.parseInt(track.substring(1)));
+                    song.put("disc",disc);
+                    song.put("track",trackNum);
+                }
+                else{
+                    song.put("track",track);
+                }
             }
             else{
-                song.put("track",track);
+                if(song.get("album").equals("32")){
+                    song.put("track",track.split("/")[0]);
+                }
+                if(track != null){
+                    song.put("track",track.split("/")[0]);
+                }
+                else{
+                    song.put("track","1");
+                }
             }
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 song.put("duration",formatDuration(Long.parseLong(cursor.getString(8))));

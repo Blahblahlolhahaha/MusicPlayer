@@ -80,7 +80,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 // if shuffle, shuffle the queue
                 shuffle();
             }
-            if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+            if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.N_MR1) {
                 createNotificationChannel();
             }
             configureMediaSession();
