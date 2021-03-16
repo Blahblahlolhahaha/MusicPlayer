@@ -36,11 +36,14 @@ import com.example.musicplayer.fragments.AlbumSongsFragment;
 import com.example.musicplayer.fragments.ArtistFragment;
 import com.example.musicplayer.fragments.DeleteDialog;
 import com.example.musicplayer.fragments.DetailsEditFragment;
+import com.example.musicplayer.fragments.GenreSongsFragment;
 import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
 import com.example.musicplayer.fragments.PlaylistSongsFragment;
+import com.example.musicplayer.fragments.SongFragment;
 import com.example.musicplayer.interfaces.Callback;
 import com.example.musicplayer.workers.CacheWorker;
+import com.example.musicplayer.workers.Genre;
 import com.example.musicplayer.workers.MusicPlayer;
 import com.example.musicplayer.workers.Playlist;
 
@@ -61,7 +64,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private Button details,add,delete,playSelected,remove;
     private ServiceConnection serviceConnection;
     private LinearLayoutCompat playing,select;
-    private boolean isPlaying,album,artist,selecting,viewing,playlist,playlistSongs;
+    private boolean isPlaying,album,artist,selecting,viewing,playlist,playlistSongs,genre;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
     private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
@@ -184,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
             startForegroundService(intent);
 
         }
-        fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getPlaylistMap()),"original"); // instantiate first view
+        fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getGenreMap(),cacheWorker.getPlaylistMap()),"original"); // instantiate first view
     }
 
     public void isStoragePermissionGranted() {
@@ -259,6 +262,11 @@ public class MainActivity extends AppCompatActivity implements Callback {
             fragmentManager.popBackStack("playlist",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             playlist = false;
             currentPlaylist = null;
+        }
+        else if(genre){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.popBackStack("genre",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            genre = false;
         }
     }
     
@@ -374,6 +382,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
+    public View.OnClickListener getGenreOnClickListener(final Genre genre){
+        return view->{
+            GenreSongsFragment genreSongsFragment = new GenreSongsFragment(genre.getSongs(),genre.getName());
+            fragmentTransaction(genreSongsFragment,"genre");
+            this.genre = true;
+        };
+    }
+
     public void callback(String songName, String artist, String album, String duration){
         // callback for MusicPlayer to load song information for notification
         songNameTextView.setText(songName);
@@ -407,6 +423,10 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public Bitmap getArtistAlbumArt(String artist){
         return cacheWorker.getArtistAlbumArt(artist);
+    }
+
+    public Bitmap getGenreAlbumArt(String album){
+        return cacheWorker.getAlbumArt(album);
     }
 
     public String getAlbumName(String ID){return cacheWorker.getAlbumName(ID);}

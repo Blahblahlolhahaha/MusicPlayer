@@ -59,7 +59,12 @@ public class CacheWorker {
         return songManager.getSongs();
     }
 
+    public ArrayList<Genre> getGenreMap(){
+        return songManager.getGenres();
+    }
+
     public ArrayList<Playlist> getPlaylistMap() { return songManager.getPlaylists(); }
+
 
     public String getAlbumName(String ID){
         for (HashMap<String,String> album:
@@ -97,18 +102,10 @@ public class CacheWorker {
 
     public ArrayList<HashMap<String,String>> getArtistSongs(String artist){
         ArrayList<HashMap<String,String>> artistSongs = new ArrayList<>();
-        ArrayList<HashMap<String,String>> artistAlbums = new ArrayList<>();
-        ArrayList<HashMap<String,String>> albums = getAlbumMap();
         for (HashMap<String,String> song:
                 getSongsMap()) {
             if(song.get("artist").equals(artist)){
                 artistSongs.add(song);
-                for (HashMap<String,String> album:
-                        albums) {
-                    if(album.get("ID").equals(song.get("album")) && !artistAlbums.contains(album)){
-                        artistAlbums.add(album);
-                    }
-                }
             }
         }
         return artistSongs;
@@ -271,6 +268,7 @@ public class CacheWorker {
                     MediaStore.Audio.Media.YEAR,
                     MediaStore.Audio.Media.TRACK,
                     MediaStore.Audio.Media.DURATION,
+
             };
         }
         else{
@@ -282,7 +280,7 @@ public class CacheWorker {
                     MediaStore.Audio.Media.ARTIST_ID,
                     MediaStore.Audio.Media.ALBUM_ID,
                     MediaStore.Audio.Media.YEAR,
-                    MediaStore.Audio.Media.TRACK
+                    MediaStore.Audio.Media.TRACK,
             };
         }
         String[] projection1 = {
@@ -293,6 +291,9 @@ public class CacheWorker {
         };
         String[] projection3 = {
                 MediaStore.Audio.Playlists._ID,MediaStore.Audio.Playlists.NAME
+        };
+        String[] projection4 = {
+                MediaStore.Audio.Genres._ID,MediaStore.Audio.Genres.NAME
         };
         Cursor cursor = context.getApplicationContext().getContentResolver().query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -323,9 +324,18 @@ public class CacheWorker {
                 null
         );
 
+        Cursor genreCursor = context.getApplicationContext().getContentResolver().query(
+                MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
+                projection4,
+                null,
+                null,
+                null
+        );
+
         ArrayList<HashMap<String,String>> songs = new ArrayList<>();
         ArrayList<HashMap<String,String>> artists = new ArrayList<>();
         ArrayList<HashMap<String,String>> albums = new ArrayList<>();
+        ArrayList<Genre> genres = new ArrayList<>();
         ArrayList<Playlist> playlists = new ArrayList<>();
         while(artistCursor.moveToNext()){
             HashMap<String,String> artist = new HashMap<>();
@@ -375,9 +385,6 @@ public class CacheWorker {
                 }
             }
             else{
-                if(song.get("album").equals("32")){
-                    song.put("track",track.split("/")[0]);
-                }
                 if(track != null){
                     song.put("track",track.split("/")[0]);
                 }
@@ -385,6 +392,7 @@ public class CacheWorker {
                     song.put("track","1");
                 }
             }
+            int genreIndex;
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 song.put("duration",formatDuration(Long.parseLong(cursor.getString(8))));
             }
@@ -396,16 +404,16 @@ public class CacheWorker {
             }
             songs.add(song);
         }
-        Collections.sort(songs,new SortSongs("title"));
+        songs.sort(new SortSongs("title"));
         while(playlistCursor.moveToNext()){
             String id = playlistCursor.getString(0);
             long idLong = Long.parseLong(id);
-            String[] projection4 = {
+            String[] projection5 = {
                     MediaStore.Audio.Playlists.Members.AUDIO_ID,
             };
             Cursor playlistSongCursor = context.getContentResolver().query(
                     MediaStore.Audio.Playlists.Members.getContentUri("external",idLong),
-                    projection4,
+                    projection5,
                     MediaStore.Audio.Media.IS_MUSIC +" != 0 ",
                     null,
                     null);
@@ -422,11 +430,36 @@ public class CacheWorker {
             playlists.add(new Playlist(id,playlistCursor.getString(1),playListSongs));
             playlistSongCursor.close();
         }
+        while(genreCursor.moveToNext()){
+            ArrayList<HashMap<String,String>> genreSongs = new ArrayList<>();
+            String ID = genreCursor.getString(0);
+            long idLong = Long.parseLong(ID);
+            String name = genreCursor.getString(1);
+            String[] projection5 = {
+                    MediaStore.Audio.Genres.Members.AUDIO_ID,
+            };
+
+            Cursor genreSongCursor = context.getContentResolver().query(
+                    MediaStore.Audio.Genres.Members.getContentUri("external",idLong),
+                    projection5,
+                    MediaStore.Audio.Media.IS_MUSIC +" != 0 ",
+                    null,
+                    null);
+            while(genreSongCursor.moveToNext()){
+                for(HashMap<String,String>song:
+                        songs){
+                    if(song.get("ID").equals(genreSongCursor.getString(0))){
+                        genreSongs.add(song);
+                    }
+                }
+            }
+            genres.add(new Genre(ID,name,genreSongs));
+        }
         albumCursor.close();
         artistCursor.close();
         cursor.close();
         playlistCursor.close();
-        songManager = new SongManager(songs,albums,artists,playlists);
+        songManager = new SongManager(songs,albums,artists,genres,playlists);
     }
 
     private static class SortSongs implements Comparator<Map<String, String>>

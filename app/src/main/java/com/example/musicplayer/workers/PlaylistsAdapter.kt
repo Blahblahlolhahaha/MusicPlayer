@@ -11,15 +11,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
 
-class PlaylistsAdapter(val playlist:ArrayList<Playlist>, val context: Context): RecyclerView.Adapter<PlaylistsAdapter.playlistViewHolder>() {
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): playlistViewHolder{
-        val cardView: CardView = LayoutInflater.from(parent.context).inflate(R.layout.playlist_card,parent,false) as CardView
-        return playlistViewHolder(cardView)
+class PlaylistsAdapter(val playlist:ArrayList<Playlist>, val context: Context): RecyclerView.Adapter<PlaylistsAdapter.PlaylistViewHolder>() {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistViewHolder{
+        val cardView: CardView = LayoutInflater.from(parent.context).inflate(R.layout.display_card,parent,false) as CardView
+        return PlaylistViewHolder(cardView)
     }
 
-    override fun onBindViewHolder(holder: playlistViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: PlaylistViewHolder, position: Int) {
         val imageView: ImageView = holder.cardView.findViewById(R.id.album_art)
-        val textView: TextView = holder.cardView.findViewById(R.id.playlist)
+        val textView: TextView = holder.cardView.findViewById(R.id.card_title)
         if(playlist[position].firstSongAlbum.equals("")){
             imageView.setImageBitmap((context as MainActivity).getAlbumArt(playlist[position].firstSongAlbum))
         }
@@ -32,7 +32,7 @@ class PlaylistsAdapter(val playlist:ArrayList<Playlist>, val context: Context): 
     }
 
 
-    class playlistViewHolder(val cardView: CardView): RecyclerView.ViewHolder(cardView) {
+    class PlaylistViewHolder(val cardView: CardView): RecyclerView.ViewHolder(cardView) {
         fun bind(callback: View.OnClickListener){
             cardView.setOnClickListener(callback)
         }

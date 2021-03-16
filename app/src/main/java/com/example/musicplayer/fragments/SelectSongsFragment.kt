@@ -27,7 +27,7 @@ class SelectSongsFragment(val playlist:Playlist): Fragment() {
         toolbar.setTitleTextColor(resources.getColor(R.color.white,null))
         mainActivity.setSelecting(true)
         val cacheWorker = mainActivity.cacheWorker
-        childFragmentManager.beginTransaction().replace(R.id.inner_fragment,MainFragment(cacheWorker.songsMap,cacheWorker.albumMap,cacheWorker.artistMap,cacheWorker.playlistMap)).commit()
+        childFragmentManager.beginTransaction().replace(R.id.inner_fragment,MainFragment(cacheWorker.songsMap,cacheWorker.albumMap,cacheWorker.artistMap,cacheWorker.genreMap,cacheWorker.playlistMap)).commit()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
