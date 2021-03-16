@@ -35,7 +35,9 @@
                 android:text="No music playing!"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/white"/>
+                android:ellipsize="marquee"
+                android:textColor="@color/white"
+                android:singleLine="true" />
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/artist"
                 android:layout_width="wrap_content"

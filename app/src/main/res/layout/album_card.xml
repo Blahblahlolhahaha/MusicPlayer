@@ -22,9 +22,11 @@ REMOVE WHITESPACE
             android:id="@+id/album"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
+            android:textSize="14sp"
             android:text="dfgfdjknvfd"
             android:textColor="@color/white"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:textAlignment="center"/>
         <TextView
             android:id="@+id/artist"
