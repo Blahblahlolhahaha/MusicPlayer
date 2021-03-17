@@ -46,12 +46,12 @@ class PlaylistDialog {
                 }catch(error: SQLiteException){
                     val contentValues = ContentValues()
                     contentValues.put(MediaStore.Audio.Playlists.NAME, name)
-                    context.contentResolver.insert(playlistUri, contentValues)
+                    val uri = context.contentResolver.insert(playlistUri, contentValues)
                     dialog.dismiss()
-                    val cursor: Cursor =  contentResolver.query(playlistUri, projection, MediaStore.Audio.Playlists.NAME + "= " + name, null, null)!!
+                    val cursor: Cursor =  contentResolver.query(uri!!, projection, null, null, null)!!
                     if(cursor.moveToNext()){
                         val playlist = Playlist(cursor.getString(0),cursor.getString(1), ArrayList())
-                        (context as MainActivity).fragmentTransaction(PlaylistSongsFragment(playlist),"Playlist Songs")
+                        (context as MainActivity).addPlaylist(playlist)
                     }
                 }
             }

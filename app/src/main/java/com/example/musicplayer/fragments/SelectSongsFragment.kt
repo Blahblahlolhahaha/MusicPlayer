@@ -8,7 +8,7 @@ import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
 import com.example.musicplayer.workers.Playlist
 
-class SelectSongsFragment(val playlist:Playlist): Fragment() {
+class   SelectSongsFragment(val playlist:Playlist): Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.select_songs_fragment,container,false)
     }

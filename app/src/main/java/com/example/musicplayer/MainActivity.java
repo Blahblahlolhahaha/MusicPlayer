@@ -70,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
     private ArrayList<View> selectedViews = new ArrayList<>();
     private Playlist currentPlaylist;
+    private MainFragment main;
     private BroadcastReceiver broadcastReceiver;
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -149,8 +150,9 @@ public class MainActivity extends AppCompatActivity implements Callback {
             select.setVisibility(View.GONE);
         });
         delete.setOnClickListener(view->{
-            new DeleteDialog(selectedSongs).showDialog(MainActivity.this); //show dialog for confirmation to delete
-            selectedSongs.clear(); // clear the selected array after deleting/cancelling
+            DeleteDialog deleteDialog = new DeleteDialog();
+            deleteDialog.showDialog(selectedSongs,new HashMap(),MainActivity.this); //show dialog for confirmation to delete
+//            selectedSongs.clear(); // clear the selected array after deleting/cancelling
             select(); // revert back to original view
         });
         playSelected.setOnClickListener(view->{
@@ -187,7 +189,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
             startForegroundService(intent);
 
         }
-        fragmentTransaction(new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getGenreMap(),cacheWorker.getPlaylistMap()),"original"); // instantiate first view
+        main = new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getGenreMap(),cacheWorker.getPlaylistMap());
+        fragmentTransaction(main,"original"); // instantiate first view
     }
 
     public void isStoragePermissionGranted() {
@@ -470,6 +473,22 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public void addToSelectedViews(View view){
 
+    }
+
+    public void addPlaylist(Playlist playlist){
+        currentPlaylist = playlist;
+        this.playlist = true;;
+        fragmentTransaction(new PlaylistSongsFragment(playlist),"playlist");
+        main.addPlaylist(playlist);
+    }
+
+    public void removePlaylist(Playlist playlist){
+        onBackPressed();
+        main.removePlaylist(playlist);
+    }
+
+    public void removeSong(HashMap<String,String> song){
+        main.removeSong(song);
     }
 
     private void unbindService(){

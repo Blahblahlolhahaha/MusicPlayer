@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.view.*
 import android.widget.Button
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -49,13 +50,16 @@ class PlaylistSongsFragment(val playlist:Playlist):Fragment() {
                 dialog.setContentView(R.layout.delete_dialog)
                 val cancel: Button = dialog.findViewById(R.id.cancel)
                 val delete: Button = dialog.findViewById(R.id.delete)
+                val text: TextView = dialog.findViewById(R.id.track_label)
+                text.setText(requireContext().getString(R.string.delete_playlist))
                 cancel.setOnClickListener{
                     dialog.dismiss()
                 }
                 delete.setOnClickListener{
                     val uri = ContentUris.withAppendedId(MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,playlist.id.toLong())
                     requireContext().contentResolver.delete(uri,null,null)
-                    (requireContext() as MainActivity).onBackPressed()
+                    (requireContext() as MainActivity).removePlaylist(playlist)
+                    dialog.dismiss()
                 }
                 dialog.show()
             }

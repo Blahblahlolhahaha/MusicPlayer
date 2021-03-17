@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class SongFragment extends Fragment {
-    private final ArrayList<HashMap<String,String>> songs;
-
+    private ArrayList<HashMap<String,String>> songs;
+    private SongAdapter songAdapter;
     public SongFragment(ArrayList<HashMap<String,String>> songs){
         this.songs = songs;
     }
@@ -36,7 +36,12 @@ public class SongFragment extends Fragment {
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         songList.setLayoutManager(linearLayoutManager);
         songList.setHasFixedSize(true);
-        SongAdapter songAdapter = new SongAdapter(songs,getContext());
+        songAdapter = new SongAdapter(songs,getContext());
         songList.setAdapter(songAdapter);
+    }
+
+    public void resetSongs(ArrayList<HashMap<String,String>> songs){
+        this.songs = songs;
+        songAdapter.notifyDataSetChanged();
     }
 }

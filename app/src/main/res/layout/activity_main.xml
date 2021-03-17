@@ -83,61 +83,67 @@
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/play_selected"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:background="@color/grey"
+                android:layout_width="40dp"
+                android:layout_height="50dp"
+                android:background="@color/transparent"
                 android:drawableTop="@drawable/play"
                 android:text="Play"
-                android:textSize="16sp"
+                android:textSize="13sp"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
-                android:layout_marginEnd="40dp"/>
+                android:layout_marginEnd="40dp"
+                android:elevation="0dp"/>
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/details"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:background="@color/grey"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:background="@color/transparent"
                 android:drawableTop="@drawable/details"
                 android:text="@string/edit"
-                android:textSize="16sp"
+                android:textSize="13sp"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
-                android:layout_marginEnd="40dp"/>
+                android:layout_marginEnd="40dp"
+                android:elevation="0dp"/>
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/addd"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:background="@color/grey"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:background="@color/transparent"
                 android:drawableTop="@drawable/add"
                 android:text="@string/add"
-                android:textSize="16sp"
+                android:textSize="13sp"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
-                android:layout_marginEnd="40dp"/>
+                android:layout_marginEnd="40dp"
+                android:elevation="0dp"/>
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/delete"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:background="@color/grey"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
                 android:drawableTop="@drawable/delete"
+                android:background="@color/transparent"
                 android:text="@string/delete"
-                android:textSize="16sp"
-                android:textAllCaps="false"
-                android:textColor="@color/white"/>
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/remove"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:background="@color/grey"
-                android:drawableTop="@drawable/remove"
-                android:text="@string/remove"
-                android:textSize="16sp"
+                android:textSize="13sp"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
-                android:visibility="gone"/>
+                android:gravity="center"
+                android:elevation="0dp"/>
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/remove"
+                android:layout_width="40dp"
+                android:layout_height="60dp"
+                android:drawableTop="@drawable/remove"
+                android:text="@string/remove"
+                android:textSize="13sp"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:visibility="gone"
+                android:elevation="0dp" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
 

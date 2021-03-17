@@ -25,6 +25,8 @@
         android:textColor="@color/white"
         android:textStyle="bold"
         android:textSize="25dp"
+        android:singleLine="true"
+        android:ellipsize="marquee"
         android:layout_marginBottom="10dp"/>
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/playing_artist"

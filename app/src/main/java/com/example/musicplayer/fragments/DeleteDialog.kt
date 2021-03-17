@@ -6,22 +6,14 @@ import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
 import java.io.File
 
 class DeleteDialog {
-    var song: HashMap<String, String>? = null
-    var songList: ArrayList<HashMap<String, String>>? = null
-    constructor(songList: ArrayList<HashMap<String, String>>){
-        this.songList = songList
-    }
-    constructor(song: HashMap<String, String>){
-        this.song  = song
-    }
-
-    fun showDialog(context: Context){
+    fun showDialog(songList: ArrayList<HashMap<String,String>>, song:HashMap<String,String>, context: Context){
         val dialog = Dialog(context)
         dialog.setContentView(R.layout.delete_dialog)
         val cancel: Button = dialog.findViewById(R.id.cancel)
@@ -30,8 +22,8 @@ class DeleteDialog {
             dialog.dismiss()
         }
         delete.setOnClickListener{
-            if(song == null){
-                for(song in songList!!){
+            if(song.isEmpty()){
+                for(song in songList){
                     val src = File(song["data"]!!)
                     val success = src.delete()
                     if(!success){
@@ -41,9 +33,10 @@ class DeleteDialog {
                         val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, song["ID"]!!.toLong())
                         val contentResolver: ContentResolver = context.contentResolver
                         contentResolver.delete(uri, null, null)
+                        (context as MainActivity).removeSong(song)
                     }
                 }
-                (context as MainActivity).onBackPressed()
+                (context as MainActivity).selectedSongs.clear()
             }
             else{
                 val src = File(song?.get("data")!!)
@@ -54,9 +47,13 @@ class DeleteDialog {
                     val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song?.get("ID")!!).toLong())
                     val contentResolver = context.contentResolver
                     contentResolver.delete(uri, null, null)
+                    context.removeSong(song);
                 }
+
             }
             dialog.dismiss()
+            (context as MainActivity).onBackPressed()
+
         }
         dialog.show()
     }

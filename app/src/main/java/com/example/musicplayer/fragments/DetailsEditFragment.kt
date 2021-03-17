@@ -142,7 +142,7 @@ class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {
                 saveButton.visibility = View.VISIBLE
             }
             R.id.delete -> {
-                context?.let { DeleteDialog(song).showDialog(it) }
+                context?.let { DeleteDialog().showDialog(ArrayList(),song,it) }
             }
         }
         return true

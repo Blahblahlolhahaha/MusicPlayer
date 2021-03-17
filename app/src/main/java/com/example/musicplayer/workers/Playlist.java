@@ -57,8 +57,8 @@ public class Playlist {
             contentValue.put(MediaStore.Audio.Playlists.Members.AUDIO_ID,songs.get(i).get("ID"));
             contentValues[i] = contentValue;
             this.songs.add(songs.get(i));
+            contentResolver.insert(playlistUri,contentValue);
         }
-        contentResolver.bulkInsert(playlistUri,contentValues);
         contentResolver.notifyChange(Uri.parse("content://media"), null);
     }
 

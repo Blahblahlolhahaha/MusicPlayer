@@ -20,7 +20,7 @@ class PlaylistsAdapter(val playlist:ArrayList<Playlist>, val context: Context): 
     override fun onBindViewHolder(holder: PlaylistViewHolder, position: Int) {
         val imageView: ImageView = holder.cardView.findViewById(R.id.album_art)
         val textView: TextView = holder.cardView.findViewById(R.id.card_title)
-        if(playlist[position].firstSongAlbum.equals("")){
+        if(!playlist[position].firstSongAlbum.equals("")){
             imageView.setImageBitmap((context as MainActivity).getAlbumArt(playlist[position].firstSongAlbum))
         }
         textView.setText(playlist[position].name)

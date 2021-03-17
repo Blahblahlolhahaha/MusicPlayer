@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -28,12 +29,16 @@ public class MainFragment extends Fragment {
     private final ArrayList<Genre> genres;
     private final ArrayList<Playlist> playlists;
     private final String[] tabNames = {"Songs","Albums","Artists","Genres","Playlists"};
+    private PlaylistFragment playlistFragment;
+    private SongFragment songFragment;
     public MainFragment(ArrayList<HashMap<String,String>> songs, ArrayList<HashMap<String,String>> album, ArrayList<HashMap<String,String>> artist, ArrayList<Genre> genres, ArrayList<Playlist> playlists){
         this.songs = songs;
         this.album = album;
         this.artist = artist;
         this.genres = genres;
         this.playlists = playlists;
+        playlistFragment = new PlaylistFragment(playlists);
+        songFragment = new SongFragment(songs);
     }
 
     @Nullable
@@ -52,6 +57,29 @@ public class MainFragment extends Fragment {
         new TabLayoutMediator(tabLayout, viewPager2,((tab, position) -> {tab.setText(tabNames[position]);})).attach();
     }
 
+    public void addPlaylist(Playlist playlist){
+        playlists.add(playlist);
+        refreshPlaylist();
+    }
+
+    public void removePlaylist(Playlist playlist){
+        playlists.remove(playlist);
+        refreshPlaylist();
+    }
+
+    public void removeSong(HashMap<String,String> song){
+        songs.remove(song);
+        songFragment.resetSongs(songs);
+    }
+
+    private void refreshPlaylist(){
+        FragmentTransaction fragmentTransaction = getChildFragmentManager().beginTransaction();
+        fragmentTransaction.detach(playlistFragment);
+        playlistFragment = new PlaylistFragment(playlists);
+        fragmentTransaction.attach(playlistFragment);
+        fragmentTransaction.commitAllowingStateLoss();
+    }
+
     private class Adapter extends FragmentStateAdapter{
         public Adapter(Fragment fragment){
             super(fragment);
@@ -61,8 +89,6 @@ public class MainFragment extends Fragment {
         @Override
         public Fragment createFragment(int position) {
             switch(position){
-                case 0:
-                    return new SongFragment(songs);
                 case 1:
                     return new AlbumFragment(album);
                 case 2:
@@ -70,12 +96,11 @@ public class MainFragment extends Fragment {
                 case 3:
                     return new GenreFragment(genres);
                 case 4:
-                    return new PlaylistFragment(playlists);
+                    return playlistFragment;
                 default:
-                    return new SongFragment(songs);
+                    return songFragment;
             }
         }
-
         @Override
         public int getItemCount() {
             return 5;
