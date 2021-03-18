@@ -38,6 +38,7 @@ import com.example.musicplayer.fragments.DetailsEditFragment;
 import com.example.musicplayer.fragments.GenreSongsFragment;
 import com.example.musicplayer.fragments.MainFragment;
 import com.example.musicplayer.fragments.PlayingFragment;
+import com.example.musicplayer.fragments.PlaylistFragment;
 import com.example.musicplayer.fragments.PlaylistSongsFragment;
 import com.example.musicplayer.interfaces.Callback;
 import com.example.musicplayer.workers.CacheWorker;
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private Button details,add,delete,playSelected,remove;
     private ServiceConnection serviceConnection;
     private LinearLayoutCompat playing,select;
-    private boolean isPlaying,album,artist,selecting,viewing,playlist,playlistSongs,genre;
+    private boolean isPlaying,album,artist,selecting,viewing,playlist,playlistSongs,genre,addSongs;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
     private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
@@ -180,6 +181,10 @@ public class MainActivity extends AppCompatActivity implements Callback {
             onBackPressed(); //reset state back to normal
             fragmentTransaction(new PlaylistSongsFragment(currentPlaylist),"playlist"); //refresh the playlist to reflect changes
         });
+        add.setOnClickListener(view->{
+            fragmentTransaction(new PlaylistFragment(cacheWorker.getPlaylistMap(),selectedSongs),"add");
+            addSongs = true;
+        });
         if(isMusicPlayerRunning()){
             intent = new Intent(this, MusicPlayer.class);
             intent.setAction("restart_app");
@@ -268,6 +273,11 @@ public class MainActivity extends AppCompatActivity implements Callback {
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.popBackStack("genre",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             genre = false;
+        }
+        else if(addSongs){
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.popBackStack("add",FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            addSongs = false;
         }
     }
     
@@ -383,6 +393,17 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
+    public View.OnClickListener getAddSongtoPlaylistOnClickListener(final Playlist playlist,final ArrayList<HashMap<String,String>>songs){
+        return view->{
+            //add selected songs to selected playlist and return to main fragment
+            main.removePlaylist(playlist);
+            playlist.addSongs(songs,getApplicationContext());
+            main.addPlaylist(playlist);
+            onBackPressed();
+            onBackPressed();
+        };
+    }
+
     public View.OnClickListener getGenreOnClickListener(final Genre genre){
         return view->{
             GenreSongsFragment genreSongsFragment = new GenreSongsFragment(genre.getSongs(),genre.getName());
@@ -473,14 +494,19 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     }
 
-    public void addPlaylist(Playlist playlist){
+    public void addPlaylist(Playlist playlist,boolean addSongs){
         currentPlaylist = playlist;
         this.playlist = true;;
-        fragmentTransaction(new PlaylistSongsFragment(playlist),"playlist");
+        if(!addSongs){
+            fragmentTransaction(new PlaylistSongsFragment(playlist),"playlist");
+        }
         main.addPlaylist(playlist);
     }
 
     public void removePlaylist(Playlist playlist){
+        if(selecting){
+            onBackPressed();
+        }
         onBackPressed();
         main.removePlaylist(playlist);
     }
