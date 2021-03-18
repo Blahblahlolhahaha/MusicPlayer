@@ -30,7 +30,8 @@ public class MainFragment extends Fragment {
     private final ArrayList<Playlist> playlists;
     private final String[] tabNames = {"Songs","Albums","Artists","Genres","Playlists"};
     private PlaylistFragment playlistFragment;
-    private SongFragment songFragment;
+    private final SongFragment songFragment;
+
     public MainFragment(ArrayList<HashMap<String,String>> songs, ArrayList<HashMap<String,String>> album, ArrayList<HashMap<String,String>> artist, ArrayList<Genre> genres, ArrayList<Playlist> playlists){
         this.songs = songs;
         this.album = album;
@@ -77,7 +78,7 @@ public class MainFragment extends Fragment {
         fragmentTransaction.detach(playlistFragment);
         playlistFragment = new PlaylistFragment(playlists);
         fragmentTransaction.attach(playlistFragment);
-        fragmentTransaction.commitAllowingStateLoss();
+        fragmentTransaction.commitNowAllowingStateLoss();
     }
 
     private class Adapter extends FragmentStateAdapter{

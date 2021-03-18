@@ -13,23 +13,34 @@ import com.example.musicplayer.R
 import com.example.musicplayer.workers.Playlist
 import com.example.musicplayer.adapters.PlaylistsAdapter
 
-class PlaylistFragment(val playlist: ArrayList<Playlist>):Fragment() {
+class PlaylistFragment:Fragment{
+    private var playlists: ArrayList<Playlist>
+    private var songs: ArrayList<HashMap<String,String>> = ArrayList()
+    private lateinit var playlistsAdapter: PlaylistsAdapter
+    constructor(playlists: ArrayList<Playlist>){
+        this.playlists = playlists
+    }
+
+    constructor(playlists:ArrayList<Playlist>, songs: ArrayList<HashMap<String,String>>){
+        this.playlists = playlists
+        this.songs = songs
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.playlist_fragment,container,false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
         val add_playlist: CardView =  view.findViewById(R.id.add_playlist)
-        val playlists: RecyclerView = view.findViewById(R.id.card_title)
+        val playlistsView: RecyclerView = view.findViewById(R.id.card_title)
         val linearLayoutManager = LinearLayoutManager(context)
-        val playlistsAdapter = PlaylistsAdapter(playlist,requireContext())
+        playlistsAdapter = PlaylistsAdapter(playlists,songs,requireContext())
         add_playlist.setOnClickListener{
-            PlaylistDialog().showDialog(requireContext())
+            PlaylistDialog(songs).showDialog(requireContext())
         }
-        playlists.layoutManager = linearLayoutManager
-        playlists.setHasFixedSize(true)
-        playlists.adapter = playlistsAdapter
+        playlistsView.layoutManager = linearLayoutManager
+        playlistsView.setHasFixedSize(true)
+        playlistsView.adapter = playlistsAdapter
+
     }
 }

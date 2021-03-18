@@ -15,7 +15,7 @@ import com.example.musicplayer.R
 import com.example.musicplayer.workers.Playlist
 import kotlin.collections.ArrayList
 
-class PlaylistDialog {
+class PlaylistDialog(private var songs: ArrayList<HashMap<String, String>>) {
 
     fun showDialog(context: Context){
         val dialog = Dialog(context)
@@ -38,20 +38,31 @@ class PlaylistDialog {
                         MediaStore.Audio.Playlists._ID, MediaStore.Audio.Playlists.NAME
                 )
                 try{
-                    val cursor: Cursor =  contentResolver.query(playlistUri, projection, MediaStore.Audio.Playlists.NAME + "=" + name + "", null, null)!!
+                    val cursor: Cursor =  contentResolver.query(playlistUri, projection, MediaStore.Audio.Playlists.NAME + "=?", arrayOf(name), null)!!
                     if(cursor.moveToNext()){
                         Toast.makeText(context, "Playlist already exists!", Toast.LENGTH_SHORT).show()
                     }
-                }catch(error: SQLiteException){
-                    val contentValues = ContentValues()
-                    contentValues.put(MediaStore.Audio.Playlists.NAME, name)
-                    val uri = context.contentResolver.insert(playlistUri, contentValues)
-                    dialog.dismiss()
-                    val cursor: Cursor =  contentResolver.query(uri!!, projection, null, null, null)!!
-                    if(cursor.moveToNext()){
-                        val playlist = Playlist(cursor.getString(0),cursor.getString(1), ArrayList())
-                        (context as MainActivity).addPlaylist(playlist)
+                    else{
+                        val contentValues = ContentValues()
+                        contentValues.put(MediaStore.Audio.Playlists.NAME, name)
+                        val uri = context.contentResolver.insert(playlistUri, contentValues)
+                        dialog.dismiss()
+                        val cursor: Cursor =  contentResolver.query(uri!!, projection, null, null, null)!!
+                        if(cursor.moveToNext()){
+                            val playlist = Playlist(cursor.getString(0),cursor.getString(1), ArrayList())
+                            if(songs.isNotEmpty()){
+                                playlist.addSongs(songs,context)
+                            }
+                            (context as MainActivity).addPlaylist(playlist,songs.isNotEmpty())
+                            if(songs.isNotEmpty()){
+                                context.onBackPressed()
+                                context.onBackPressed()
+                                context.onBackPressed()
+                            }
+                        }
                     }
+                }catch(error: SQLiteException){
+                    Toast.makeText(context, "An error occured", Toast.LENGTH_SHORT).show()
                 }
             }
         }
