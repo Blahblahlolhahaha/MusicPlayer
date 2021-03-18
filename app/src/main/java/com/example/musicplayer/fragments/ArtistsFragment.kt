@@ -8,7 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.musicplayer.R
-import com.example.musicplayer.workers.ArtistsAdapter
+import com.example.musicplayer.adapters.ArtistsAdapter
 
 class ArtistsFragment(val artists: ArrayList<HashMap<String,String>>): Fragment(){
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

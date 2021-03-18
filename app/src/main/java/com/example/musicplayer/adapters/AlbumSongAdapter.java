@@ -1,4 +1,4 @@
-package com.example.musicplayer.workers;
+package com.example.musicplayer.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;

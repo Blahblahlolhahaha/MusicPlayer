@@ -1,6 +1,5 @@
 package com.example.musicplayer.fragments
 
-import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.os.Bundle
@@ -11,17 +10,14 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.view.menu.MenuBuilder
-import androidx.core.view.get
 import androidx.fragment.app.Fragment
+import com.example.musicplayer.dialogs.DeleteDialog
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
-import com.example.musicplayer.workers.CacheWorker
 import org.cmc.music.metadata.MusicMetadata
 import org.cmc.music.myid3.MyID3
 import java.io.File
 import java.util.*
-import java.util.zip.Inflater
 import kotlin.collections.ArrayList
 
 class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {

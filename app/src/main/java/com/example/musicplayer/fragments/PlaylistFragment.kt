@@ -8,9 +8,10 @@ import androidx.cardview.widget.CardView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.musicplayer.dialogs.PlaylistDialog
 import com.example.musicplayer.R
 import com.example.musicplayer.workers.Playlist
-import com.example.musicplayer.workers.PlaylistsAdapter
+import com.example.musicplayer.adapters.PlaylistsAdapter
 
 class PlaylistFragment(val playlist: ArrayList<Playlist>):Fragment() {
 

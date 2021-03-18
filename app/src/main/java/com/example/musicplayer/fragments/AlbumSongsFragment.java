@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
-import com.example.musicplayer.workers.AlbumSongAdapter;
+import com.example.musicplayer.adapters.AlbumSongAdapter;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;

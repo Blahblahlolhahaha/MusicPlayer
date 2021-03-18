@@ -1,4 +1,4 @@
-package com.example.musicplayer.fragments
+package com.example.musicplayer.dialogs
 
 import android.app.Dialog
 import android.content.ContentResolver
@@ -6,7 +6,6 @@ import android.content.ContentUris
 import android.content.Context
 import android.provider.MediaStore
 import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R

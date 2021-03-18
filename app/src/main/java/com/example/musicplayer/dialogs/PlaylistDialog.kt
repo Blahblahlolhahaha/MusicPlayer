@@ -1,4 +1,4 @@
-package com.example.musicplayer.fragments
+package com.example.musicplayer.dialogs
 
 import android.app.Dialog
 import android.content.ContentValues
@@ -13,7 +13,6 @@ import android.widget.Toast
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
 import com.example.musicplayer.workers.Playlist
-import java.util.*
 import kotlin.collections.ArrayList
 
 class PlaylistDialog {

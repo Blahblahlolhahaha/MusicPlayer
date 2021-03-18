@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.musicplayer.R
 import com.example.musicplayer.workers.Genre
-import com.example.musicplayer.workers.GenreAdapter
+import com.example.musicplayer.adapters.GenreAdapter
 
 class GenreFragment(val genres: ArrayList<Genre>,):Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

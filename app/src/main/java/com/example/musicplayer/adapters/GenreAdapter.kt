@@ -1,7 +1,6 @@
-package com.example.musicplayer.workers
+package com.example.musicplayer.adapters
 
 import android.content.Context
-import android.text.Layout
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,8 +10,9 @@ import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
+import com.example.musicplayer.workers.Genre
 
-class GenreAdapter(val genres:ArrayList<Genre>,val context: Context): RecyclerView.Adapter<GenreAdapter.GenreViewHolder>() {
+class GenreAdapter(val genres:ArrayList<Genre>, val context: Context): RecyclerView.Adapter<GenreAdapter.GenreViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GenreViewHolder {
         val cardView: CardView = LayoutInflater.from(context).inflate(R.layout.display_card,parent,false) as CardView
         return GenreViewHolder(cardView)

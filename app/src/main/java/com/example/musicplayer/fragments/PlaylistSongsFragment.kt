@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
 import com.example.musicplayer.workers.Playlist
-import com.example.musicplayer.workers.SongAdapter
+import com.example.musicplayer.adapters.SongAdapter
 
 class PlaylistSongsFragment(val playlist:Playlist):Fragment() {
     lateinit var recyclerView: RecyclerView

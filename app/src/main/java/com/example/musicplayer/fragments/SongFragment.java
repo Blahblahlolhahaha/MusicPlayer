@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.musicplayer.R;
-import com.example.musicplayer.workers.SongAdapter;
+import com.example.musicplayer.adapters.SongAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
