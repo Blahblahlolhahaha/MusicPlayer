@@ -7,23 +7,24 @@ Its a sad music player that i made to learn a lot of android stuff which include
 * Recyclerview
 * Coordinator Layout
 * Content Provider
+* Constrant layout
+* Dialogs
 * Single Activity + a lot of fragments
 * a lot of data storage ideas
+* A lot on android activity/fragment/services lifecycle
 
 ## Known Bugs/ Issues
 * Sometimes album artist is not showing properly
 * Sometimes switching tabs right when app starts crashes the app
-* Music control in notifications refuses to go, even after closing the app
+* Playlist screen turns blank upon deleting a playlist
+  * To workaround, switch to songs screen then swutch back to playlist screen
 
 
 ## TODO
 * Optimise code
-* Add seekbar in noti/playing fragment
 * Improve UI
-* Add genres
-* Add shortcut to add songs to queue/playlist
+* Add sharing option
+* Add bluetooth control
+* Add search bar
 
 If u guys see any bugs that are not listed here, feel free to open an issue :D
-
-
-Updates will be slower now because school term just started :P
