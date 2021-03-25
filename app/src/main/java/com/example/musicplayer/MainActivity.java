@@ -439,6 +439,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST,artist)
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM,album)
                 .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,albumArt)
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,formatTime(duration))
                 .build()
         );
         musicPlayer.createNotification();
@@ -551,6 +552,11 @@ public class MainActivity extends AppCompatActivity implements Callback {
         }
         selectedSongs.clear();
         selectedViews.clear();
+    }
+
+    private long formatTime(String duration){
+        String[] minSec = duration.split(":");
+        return (long)(Integer.parseInt(minSec[0]) * 60 * 1000 + Integer.parseInt(minSec[1]) * 1000);
     }
 
     private boolean isMusicPlayerRunning(){

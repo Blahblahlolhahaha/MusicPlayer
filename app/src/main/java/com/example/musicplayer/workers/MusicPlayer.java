@@ -14,10 +14,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.util.Base64;
 import android.view.KeyEvent;
 
 import androidx.annotation.NonNull;
@@ -31,9 +33,13 @@ import androidx.media.session.MediaButtonReceiver;
 import com.example.musicplayer.R;
 import com.example.musicplayer.interfaces.Callback;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlayer.OnPreparedListener {
@@ -51,6 +57,13 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
     @Override
     public void onCreate() {
         super.onCreate();
+        mediaSession = new MediaSessionCompat(this,"mediaSession");
+        Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+        mediaButtonIntent.setClass(getApplicationContext(), MediaButtonReceiver.class);
+        PendingIntent mediaButtonPendingIntent = PendingIntent.getBroadcast(getApplicationContext(),0,mediaButtonIntent,0);
+        mediaSession.setMediaButtonReceiver(mediaButtonPendingIntent);
+        configureMediaSession();
+        setSessionToken(mediaSession.getSessionToken());
     }
 
     @Override
@@ -78,11 +91,7 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
         }
         else{
             //if newly started
-            mediaSession = new MediaSessionCompat(getApplicationContext(),"mediaSession");
-            Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
-            mediaButtonIntent.setClass(getApplicationContext(), MediaButtonReceiver.class);
-            PendingIntent mediaButtonPendingIntent = PendingIntent.getBroadcast(getApplicationContext(),0,mediaButtonIntent,0);
-            mediaSession.setMediaButtonReceiver(mediaButtonPendingIntent);
+
             Bundle bundle = intent.getExtras();
             original = (ArrayList<MediaBrowserCompat.MediaItem>) bundle.get("songs");//get song list
             songs = (ArrayList<MediaBrowserCompat.MediaItem>) original.clone();//clone cos pass-by-value is kinda sad
@@ -97,11 +106,9 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
             if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.N_MR1) {
                 createNotificationChannel();
             }
-            configureMediaSession();
             createMusicPlayer();
-            setSessionToken(mediaSession.getSessionToken());
             MediaButtonReceiver.handleIntent(mediaSession,intent);
-
+            encodeRecent();
         }
         return START_STICKY;
     }
@@ -122,7 +129,7 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
 
     @Override
     public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
-
+        result.sendResult(getRecent());
     }
 
     @Override
@@ -146,15 +153,22 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
         return mediaPlayer.getCurrentPosition();
     }
 
-    public void setPosition(int position){ mediaPlayer.seekTo(position);}
+    public void setPosition(int position){
+        mediaPlayer.seekTo(position);
+        mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|PlaybackStateCompat.ACTION_SEEK_TO )
+                .setState(PlaybackStateCompat.STATE_PLAYING,getPosition(),1.0f)
+                .build()
+        );
+    }
 
     public void pause(){
         mediaPlayer.pause();
         callback.setLogo(false);
         createNotification();
         mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
-                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-                .setState(PlaybackStateCompat.STATE_PAUSED,0,1.0f)
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|PlaybackStateCompat.ACTION_SEEK_TO )
+                .setState(PlaybackStateCompat.STATE_PAUSED,getPosition(),1.0f)
                 .build()
         );
     }
@@ -163,8 +177,8 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
         callback.setLogo(true);
         createNotification();
         mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
-                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-                .setState(PlaybackStateCompat.STATE_PLAYING,0,1.0f)
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|PlaybackStateCompat.ACTION_SEEK_TO )
+                .setState(PlaybackStateCompat.STATE_PLAYING,getPosition(),1.0f)
                 .build()
         );//sets playback state as playing to show correct actions on lock screen
     }
@@ -290,7 +304,7 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setOngoing(true)
                 .setVisibility(androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC)
-                .setStyle(mediaStyle.setShowActionsInCompactView(3).setMediaSession(mediaSession.getSessionToken()))
+                .setStyle(mediaStyle.setShowActionsInCompactView(0,1,2).setMediaSession(mediaSession.getSessionToken()))
                 .addAction(new androidx.core.app.NotificationCompat.Action.Builder(R.drawable.previous,"previous",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("previous",0),intent.setAction("action_previous"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
                 .addAction(playAction)
                 .addAction(new androidx.core.app.NotificationCompat.Action.Builder(R.drawable.next,"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("next",0),intent.setAction("action_next"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
@@ -324,8 +338,8 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
             createMusicPlayer();
         });
         mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
-                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
-                .setState(PlaybackStateCompat.STATE_PLAYING,0,1.0f)
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|PlaybackStateCompat.ACTION_SEEK_TO )
+                .setState(PlaybackStateCompat.STATE_PLAYING,getPosition(),1.0f)
                 .build()
         );
     }
@@ -349,7 +363,6 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
             public void onSeekTo(long pos) {
                 mediaPlayer.seekTo((int)pos);
             }
-
             @Override
             public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
                 KeyEvent keyEvent = (KeyEvent) mediaButtonEvent.getExtras().get(Intent.EXTRA_KEY_EVENT);
@@ -405,9 +418,27 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
                 mediaPlayer.stop();
                 mediaPlayer.release();
             }
+
+            @Override
+            public void onFastForward() {
+                mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                        .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|PlaybackStateCompat.ACTION_SEEK_TO )
+                        .setState(PlaybackStateCompat.STATE_PLAYING,getPosition(),1.0f)
+                        .build()
+                );
+            }
+
+            @Override
+            public void onRewind() {
+                mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                        .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|PlaybackStateCompat.ACTION_SEEK_TO )
+                        .setState(PlaybackStateCompat.STATE_PLAYING,getPosition(),1.0f)
+                        .build()
+                );
+            }
         });
         mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
-                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|PlaybackStateCompat.ACTION_SEEK_TO )
                 .setState(PlaybackStateCompat.STATE_STOPPED,0,1.0f)
                 .build()
         );
@@ -425,6 +456,37 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
         notificationChannel.setVibrationPattern(null);
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(notificationChannel);
+    }
+
+    private void encodeRecent(){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(songs);
+            String encoded = new String(Base64.encode(baos.toByteArray(),Base64.DEFAULT));
+            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("recent",MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString("recent",encoded);
+            editor.apply();
+            baos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private ArrayList<MediaBrowserCompat.MediaItem> getRecent(){
+        SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences("recent",MODE_PRIVATE);
+        byte[] decoded = Base64.decode(sharedPreferences.getString("recent",""),Base64.DEFAULT);
+        ByteArrayInputStream bais = new ByteArrayInputStream(decoded);
+        try {
+            ObjectInputStream oos = new ObjectInputStream(bais);
+            ArrayList<MediaBrowserCompat.MediaItem> recent = (ArrayList<MediaBrowserCompat.MediaItem>) oos.readObject();
+            bais.close();
+            return recent;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
