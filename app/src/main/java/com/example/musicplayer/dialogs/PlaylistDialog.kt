@@ -7,6 +7,7 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteException
 import android.net.Uri
 import android.provider.MediaStore
+import android.support.v4.media.MediaBrowserCompat
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
@@ -15,7 +16,7 @@ import com.example.musicplayer.R
 import com.example.musicplayer.workers.Playlist
 import kotlin.collections.ArrayList
 
-class PlaylistDialog(private var songs: ArrayList<HashMap<String, String>>) {
+class PlaylistDialog(private var songs: ArrayList<MediaBrowserCompat.MediaItem>) {
 
     fun showDialog(context: Context){
         val dialog = Dialog(context)

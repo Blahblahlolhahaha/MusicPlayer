@@ -1,6 +1,8 @@
 package com.example.musicplayer.adapters
 
 import android.content.Context
+import android.media.browse.MediaBrowser
+import android.support.v4.media.MediaBrowserCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +14,7 @@ import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
 import com.example.musicplayer.workers.Playlist
 
-class PlaylistsAdapter(private var playlists: ArrayList<Playlist>, private var songs: ArrayList<HashMap<String, String>>, private var context: Context) : RecyclerView.Adapter<PlaylistsAdapter.PlaylistViewHolder>() {
+class PlaylistsAdapter(private var playlists: ArrayList<Playlist>, private var songs: ArrayList<MediaBrowserCompat.MediaItem>, private var context: Context) : RecyclerView.Adapter<PlaylistsAdapter.PlaylistViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistViewHolder {
         val cardView: CardView = LayoutInflater.from(parent.context).inflate(R.layout.display_card,parent,false) as CardView

@@ -1,6 +1,7 @@
 package com.example.musicplayer.fragments;
 
 import android.os.Bundle;
+import android.support.v4.media.MediaBrowserCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,9 +19,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class SongFragment extends Fragment {
-    private ArrayList<HashMap<String,String>> songs;
+    private ArrayList<MediaBrowserCompat.MediaItem> songs;
     private SongAdapter songAdapter;
-    public SongFragment(ArrayList<HashMap<String,String>> songs){
+    public SongFragment(ArrayList<MediaBrowserCompat.MediaItem> songs){
         this.songs = songs;
     }
     @Nullable
@@ -40,7 +41,7 @@ public class SongFragment extends Fragment {
         songList.setAdapter(songAdapter);
     }
 
-    public void resetSongs(ArrayList<HashMap<String,String>> songs){
+    public void resetSongs(ArrayList<MediaBrowserCompat.MediaItem> songs){
         this.songs = songs;
         songAdapter.notifyDataSetChanged();
     }

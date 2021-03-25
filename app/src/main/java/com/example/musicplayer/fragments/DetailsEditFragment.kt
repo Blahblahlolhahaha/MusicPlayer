@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.content.ContentValues
 import android.os.Bundle
 import android.provider.MediaStore
+import android.support.v4.media.MediaBrowserCompat
 import android.text.InputType
 import android.view.*
 import android.widget.Button
@@ -17,12 +18,11 @@ import com.example.musicplayer.R
 import org.cmc.music.metadata.MusicMetadata
 import org.cmc.music.myid3.MyID3
 import java.io.File
-import java.util.*
 import kotlin.collections.ArrayList
 
-class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {
+class DetailsEditFragment(val song: MediaBrowserCompat.MediaItem) : Fragment() {
     private val editTextArray: ArrayList<EditText> = ArrayList()
-    private val data = song["data"]
+    private val data = song.description.mediaUri.toString()
     private lateinit var toolbar: androidx.appcompat.widget.Toolbar
     private lateinit var cancelButton: Button
     private lateinit var saveButton: Button
@@ -49,14 +49,14 @@ class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {
         yearEdit = view.findViewById(R.id.year)
         path = view.findViewById(R.id.path)
         editTextArray.addAll(listOf(songEdit, artistEdit, albumEdit, discEdit, trackEdit, yearEdit))
-        songEdit.setText(song["title"])
-        artistEdit.setText(song["artist"])
+        songEdit.setText(song.description.title)
+        artistEdit.setText(song.description.extras?.getString("artist"))
         val mainActivity = context as MainActivity
-        albumEdit.setText(mainActivity.getAlbumName(song["album"]))
-        val disc: String? = song["disc"]
+        albumEdit.setText(mainActivity.getAlbumName(song.description.extras?.getString("album")))
+        val disc: String? = song.description.extras?.getString("disc")
         discEdit.setText(if (disc.equals(null)) "1" else disc)
-        trackEdit.setText(song["track"])
-        yearEdit.setText(song["year"])
+        trackEdit.setText(song.description.extras?.getString("track"))
+        yearEdit.setText(song.description.extras?.getString("year"))
         path.text = data
         toolbar = view.findViewById(R.id.toolbar)
         mainActivity.setSupportActionBar(toolbar)
@@ -82,7 +82,7 @@ class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {
                 musicMetadata.songTitle = songEdit.text.toString()
                 musicMetadata.artist = artistEdit.text.toString()
                 musicMetadata.album = albumEdit.text.toString()
-                if(song["disc"] != null){
+                if(song.description.extras?.getString("disc") != null){
                     musicMetadata.trackNumber = Integer.parseInt(discEdit.text.toString() + String.format("%03d",Integer.parseInt(trackEdit.text.toString())))
                 }
                 else{
@@ -97,7 +97,7 @@ class DetailsEditFragment(val song: HashMap<String, String>): Fragment() {
                 cancelButton.visibility = View.GONE
                 saveButton.visibility = View.GONE
                 if(!mainActivity.getAlbumID(musicMetadata.album).equals("")){
-                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song["ID"]!!).toLong())
+                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song.mediaId!!).toLong())
                     val values = ContentValues()
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                         values.put(MediaStore.Audio.Media.IS_PENDING, 1)

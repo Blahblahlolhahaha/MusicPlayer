@@ -1,15 +1,17 @@
 package com.example.musicplayer.workers;
 
+import android.support.v4.media.MediaBrowserCompat;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class SongManager {
-    private final ArrayList<HashMap<String,String>> songs;
+    private final ArrayList<MediaBrowserCompat.MediaItem> songs;
     private final ArrayList<HashMap<String,String>> albums;
     private final ArrayList<HashMap<String,String>> artists;
     private final ArrayList<Genre> genres;
     private final ArrayList<Playlist> playlists;
-    public SongManager(ArrayList<HashMap<String,String>> s, ArrayList<HashMap<String,String>> a, ArrayList<HashMap<String,String>> b,ArrayList<Genre> c,ArrayList<Playlist> d){
+    public SongManager(ArrayList<MediaBrowserCompat.MediaItem> s, ArrayList<HashMap<String,String>> a, ArrayList<HashMap<String,String>> b, ArrayList<Genre> c, ArrayList<Playlist> d){
         songs = s;
         albums = a;
         artists = b;
@@ -17,7 +19,7 @@ public class SongManager {
         playlists = d;
     }
 
-    public ArrayList<HashMap<String, String>> getSongs() {
+    public ArrayList<MediaBrowserCompat.MediaItem> getSongs() {
         return songs;
     }
 

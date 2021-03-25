@@ -1,6 +1,7 @@
 package com.example.musicplayer.fragments
 
 import android.os.Bundle
+import android.support.v4.media.MediaBrowserCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +12,7 @@ import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
 import com.example.musicplayer.adapters.SongAdapter
 
-class GenreSongsFragment(val songs:ArrayList<HashMap<String,String>>,val name:String): Fragment() {
+class GenreSongsFragment(val songs:ArrayList< MediaBrowserCompat.MediaItem>,val name:String): Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.genre_fragment,container,false)
     }

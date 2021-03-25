@@ -1,14 +1,17 @@
 package com.example.musicplayer.workers;
 
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.media.MediaBrowserCompat;
+import android.support.v4.media.MediaDescriptionCompat;
 import android.util.Log;
 import android.util.LruCache;
 
@@ -16,18 +19,12 @@ import com.example.musicplayer.R;
 import com.jakewharton.disklrucache.DiskLruCache;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class CacheWorker {
@@ -55,7 +52,7 @@ public class CacheWorker {
         return songManager.getArtists();
     }
 
-    public ArrayList<HashMap<String,String>> getSongsMap(){
+    public ArrayList<MediaBrowserCompat.MediaItem> getSongsMap(){
         return songManager.getSongs();
     }
 
@@ -91,20 +88,20 @@ public class CacheWorker {
     }
 
     public Bitmap getArtistAlbumArt(String artist){
-        for (HashMap<String,String> song:
+        for (MediaBrowserCompat.MediaItem song:
                 getSongsMap()) {
-            if(song.get("artist").equals(artist)){
-                return albumArtCache.get(song.get("album"));
+            if(song.getDescription().getExtras().getString("artist").equals(artist)){
+                return albumArtCache.get(song.getDescription().getExtras().getString("album"));
             }
         }
         return BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
     }
 
-    public ArrayList<HashMap<String,String>> getArtistSongs(String artist){
-        ArrayList<HashMap<String,String>> artistSongs = new ArrayList<>();
-        for (HashMap<String,String> song:
+    public ArrayList<MediaBrowserCompat.MediaItem> getArtistSongs(String artist){
+        ArrayList<MediaBrowserCompat.MediaItem> artistSongs = new ArrayList<>();
+        for (MediaBrowserCompat.MediaItem song:
                 getSongsMap()) {
-            if(song.get("artist").equals(artist)){
+            if(song.getDescription().getExtras().getString("artist").equals(artist)){
                 artistSongs.add(song);
             }
         }
@@ -122,11 +119,11 @@ public class CacheWorker {
         return artistAlbums;
     }
 
-    public ArrayList<HashMap<String,String>> getAlbumSongs(String albumID){
-        ArrayList<HashMap<String,String>> albumSongs = new ArrayList<>();
-        for (HashMap<String,String> song:
+    public ArrayList<MediaBrowserCompat.MediaItem> getAlbumSongs(String albumID){
+        ArrayList<MediaBrowserCompat.MediaItem> albumSongs = new ArrayList<>();
+        for (MediaBrowserCompat.MediaItem song:
              getSongsMap()) {
-            if(song.get("album").equals(albumID)){
+            if(song.getDescription().getExtras().getString("album").equals(albumID)){
                 albumSongs.add(song);
             }
         }
@@ -203,6 +200,7 @@ public class CacheWorker {
     }
 
 
+
     private class BitmapWorkerTask extends AsyncTask<ArrayList<HashMap<String,String>>,Void,Void>{
         @SafeVarargs
         @Override
@@ -216,10 +214,10 @@ public class CacheWorker {
                         if(albumArt == null){
                             MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
                             try{
-                                for (HashMap<String,String>song:
+                                for (MediaBrowserCompat.MediaItem song:
                                         songManager.getSongs()) {
-                                    if(song.get("album").equals(albumID)){
-                                        mediaMetadataRetriever.setDataSource(song.get("data"));
+                                    if(song.getDescription().getExtras().getString("album").equals(albumID)){
+                                        mediaMetadataRetriever.setDataSource(song.getDescription().getMediaUri().toString());
                                     }
                                 }
                             }catch(RuntimeException e){
@@ -332,7 +330,7 @@ public class CacheWorker {
                 null
         );
 
-        ArrayList<HashMap<String,String>> songs = new ArrayList<>();
+        ArrayList<MediaBrowserCompat.MediaItem> songs = new ArrayList<>();
         ArrayList<HashMap<String,String>> artists = new ArrayList<>();
         ArrayList<HashMap<String,String>> albums = new ArrayList<>();
         ArrayList<Genre> genres = new ArrayList<>();
@@ -353,55 +351,59 @@ public class CacheWorker {
             albums.add(album);
         }
         while(cursor.moveToNext()){
-            HashMap<String,String> song = new HashMap<>();
-            song.put("ID",cursor.getString(0));
-            song.put("title",cursor.getString(1));
-            song.put("data",cursor.getString(2));
-            song.put("display_name",cursor.getString(3));
+            Bundle otherDetails = new Bundle();
             if(cursor.getString(4) != null){
                 String ID = cursor.getString(4);
                 for(HashMap<String,String>artist
                         :artists){
                     if(artist.get("ID").equals(ID)){
-                        song.put("artist",artist.get("name"));
+                        otherDetails.putString("artist",artist.get("name"));
                     }
                 }
             }
             else{
-                song.put("artist","Unknown");
+                otherDetails.putString("artist","Unknown");
             }
-            song.put("album",cursor.getString(5)==null?"Unknown":cursor.getString(5));
-            song.put("year",cursor.getString(6));
+            otherDetails.putString("album",cursor.getString(5)==null?"Unknown":cursor.getString(5));
+            otherDetails.putString("year",cursor.getString(6));
             String track = cursor.getString(7);
             if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
                 if(track.length() == 4){
                     String disc = track.substring(0,1);
                     String trackNum = String.valueOf(Integer.parseInt(track.substring(1)));
-                    song.put("disc",disc);
-                    song.put("track",trackNum);
+                    otherDetails.putString("disc",disc);
+                    otherDetails.putString("track",trackNum);
                 }
                 else{
-                    song.put("track",track);
+                    otherDetails.putString("track",track);
                 }
             }
             else{
                 if(track != null){
-                    song.put("track",track.split("/")[0]);
+                    otherDetails.putString("track",track.split("/")[0]);
                 }
                 else{
-                    song.put("track","1");
+                    otherDetails.putString("track","1");
                 }
             }
-            int genreIndex;
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                song.put("duration",formatDuration(Long.parseLong(cursor.getString(8))));
+                otherDetails.putString("duration",formatDuration(Long.parseLong(cursor.getString(8))));
             }
             else{
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-                mmr.setDataSource(song.get("data"));
+                mmr.setDataSource(cursor.getString(2));
                 String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                song.put("duration",formatDuration(Long.parseLong(duration)));
+                otherDetails.putString("duration",formatDuration(Long.parseLong(duration)));
             }
+            MediaDescriptionCompat songDetails = new MediaDescriptionCompat.Builder()
+                    .setMediaId(cursor.getString(0))
+                    .setTitle(cursor.getString(1))
+                    .setMediaUri(Uri.parse(cursor.getString(2)))
+                    .setExtras(otherDetails)
+                    .build();
+            MediaBrowserCompat.MediaItem song =
+                    new MediaBrowserCompat.MediaItem(songDetails,
+                            MediaBrowserCompat.MediaItem.FLAG_PLAYABLE);
             songs.add(song);
         }
         songs.sort(new SortSongs("title"));
@@ -417,12 +419,12 @@ public class CacheWorker {
                     MediaStore.Audio.Media.IS_MUSIC +" != 0 ",
                     null,
                     null);
-            ArrayList<HashMap<String,String>> playListSongs = new ArrayList<>();
+            ArrayList<MediaBrowserCompat.MediaItem> playListSongs = new ArrayList<>();
             while(playlistSongCursor.moveToNext()){
                 Log.d("yes",playlistSongCursor.getString(0));
-                for(HashMap<String,String>song:
+                for(MediaBrowserCompat.MediaItem song:
                 songs){
-                    if(song.get("ID").equals(playlistSongCursor.getString(0))){
+                    if(song.getMediaId().equals(playlistSongCursor.getString(0))){
                         playListSongs.add(song);
                     }
                 }
@@ -431,7 +433,7 @@ public class CacheWorker {
             playlistSongCursor.close();
         }
         while(genreCursor.moveToNext()){
-            ArrayList<HashMap<String,String>> genreSongs = new ArrayList<>();
+            ArrayList<MediaBrowserCompat.MediaItem> genreSongs = new ArrayList<>();
             String ID = genreCursor.getString(0);
             long idLong = Long.parseLong(ID);
             String name = genreCursor.getString(1);
@@ -446,9 +448,9 @@ public class CacheWorker {
                     null,
                     null);
             while(genreSongCursor.moveToNext()){
-                for(HashMap<String,String>song:
+                for(MediaBrowserCompat.MediaItem song:
                         songs){
-                    if(song.get("ID").equals(genreSongCursor.getString(0))){
+                    if(song.getMediaId().equals(genreSongCursor.getString(0))){
                         genreSongs.add(song);
                     }
                 }
@@ -462,7 +464,7 @@ public class CacheWorker {
         songManager = new SongManager(songs,albums,artists,genres,playlists);
     }
 
-    private static class SortSongs implements Comparator<Map<String, String>>
+    private static class SortSongs implements Comparator<MediaBrowserCompat.MediaItem>
     {
         private final String key;
 
@@ -471,12 +473,12 @@ public class CacheWorker {
             this.key = key;
         }
 
-        public int compare(Map<String, String> first,
-                           Map<String, String> second)
-        {
-            // TODO: Null checking, both for maps and values
-            String firstValue = first.get(key);
-            String secondValue = second.get(key);
+        @Override
+        public int compare(MediaBrowserCompat.MediaItem o1, MediaBrowserCompat.MediaItem o2) {
+            String firstValue = (String) o1.getDescription().getTitle();
+            String secondValue = (String) o2.getDescription().getTitle();
+            assert firstValue != null;
+            assert secondValue != null;
             return firstValue.compareTo(secondValue);
         }
     }

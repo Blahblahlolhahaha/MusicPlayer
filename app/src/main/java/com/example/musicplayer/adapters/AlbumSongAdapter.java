@@ -1,6 +1,7 @@
 package com.example.musicplayer.adapters;
 
 import android.content.Context;
+import android.support.v4.media.MediaBrowserCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,21 +17,20 @@ import com.example.musicplayer.R;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 
 public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
-    private final ArrayList<HashMap<String,String>> songs;
+    private final ArrayList<MediaBrowserCompat.MediaItem> songs;
     private final String albumArtist;
     private final Context context;
     int discNum;
     int currentDisk = 0;
     boolean gotDisc = false;
     ArrayList<Integer> disc_position = new ArrayList<>();
-    public AlbumSongAdapter(ArrayList<HashMap<String,String>> songs, String albumArtist, Context context){
+    public AlbumSongAdapter(ArrayList<MediaBrowserCompat.MediaItem> songs, String albumArtist, Context context){
         this.albumArtist = albumArtist;
         this.context = context;
-        if(songs.get(0).containsKey("disc")){
+        if(Objects.requireNonNull(songs.get(0).getDescription().getExtras()).containsKey("disc")){
             //checks whether if the album contains disc numbers
             discNum = 0;
             disc_position.add(0);
@@ -68,19 +68,19 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         if (holder.getItemViewType() == 1){
             //a song
             //set song information on the CardView
-            HashMap<String,String> song = songs.get(position);
+            MediaBrowserCompat.MediaItem song = songs.get(position);
             TextView track = ((SongViewHolder) holder).cardView.findViewById(R.id.track);
             TextView artist = ((SongViewHolder) holder).cardView.findViewById(R.id.artist);
             TextView songName = (((SongViewHolder) holder)).cardView.findViewById(R.id.song);
             TextView duration = (((SongViewHolder) holder)).cardView.findViewById(R.id.duration);
             LinearLayoutCompat linearLayout = ((SongViewHolder) holder).cardView.findViewById(R.id.background);
-            track.setText(song.get("track"));
-            if(!song.get("artist").equals(albumArtist)){
-                artist.setText(song.get("artist"));
+            track.setText(Objects.requireNonNull(song.getDescription().getExtras()).getString("track"));
+            if(!song.getDescription().getExtras().getString("artist").equals(albumArtist)){
+                artist.setText(song.getDescription().getExtras().getString("artist"));
                 artist.setVisibility(View.VISIBLE);
             }
-            songName.setText(song.get("title"));
-            duration.setText(song.get("duration"));
+            songName.setText(song.getDescription().getTitle());
+            duration.setText(song.getDescription().getExtras().getString("duration"));
             //Checks whether the song is selected in a previous view and shows the current state of the CardView
             if(!((MainActivity) context).checkSelected(song)){
                 ((SongViewHolder) holder).cardView.setSelected(false);
@@ -96,7 +96,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         else{
             //a new disc
             TextView disk = ((DiskViewHolder)holder).textView;
-            String diskText = "Disc " + songs.get(position + disc_position.indexOf(position) + 1).get("disc");
+            String diskText = "Disc " + Objects.requireNonNull(songs.get(position + disc_position.indexOf(position) + 1).getDescription().getExtras()).getString(("disc"));
             disk.setText(diskText);
         }
 
@@ -127,20 +127,20 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             textView = t;
         }
     }
-    private ArrayList<HashMap<String,String>> splitByDisc(ArrayList<HashMap<String,String>> songs){
-        ArrayList<HashMap<String,String>> discTracks = new ArrayList<>();
-        ArrayList<HashMap<String,String>> songsss = new ArrayList<>();
+    private ArrayList<MediaBrowserCompat.MediaItem> splitByDisc(ArrayList<MediaBrowserCompat.MediaItem> songs){
+        ArrayList<MediaBrowserCompat.MediaItem> discTracks = new ArrayList<>();
+        ArrayList<MediaBrowserCompat.MediaItem> songsss = new ArrayList<>();
         for(int i = 0; i < songs.size(); i++){
-            HashMap<String,String> song = songs.get(i);
+            MediaBrowserCompat.MediaItem song = songs.get(i);
             discTracks.add(song);
             if(i + 1 != songs.size()){
-                if(songs.get(i).get("disc") == null){
-                    songs.get(i).put("disc","0");//if no disc just become disc 0 (prevent errors at the check ltr)
+                if(Objects.requireNonNull(songs.get(i).getDescription().getExtras()).getString("disc") == null){
+                    Objects.requireNonNull(songs.get(i).getDescription().getExtras()).getString("disc","0");//if no disc just become disc 0 (prevent errors at the check ltr)
                 }
-                else if(songs.get(i+1).get("disc") == null){
-                    songs.get(i+1).put("disc","0");//if no disc just become disc 0 (prevent errors at the check ltr)
+                else if(Objects.requireNonNull(songs.get(i + 1).getDescription().getExtras()).getString("disc") == null){
+                    Objects.requireNonNull(songs.get(i + 1).getDescription().getExtras()).getString("disc","0");//if no disc just become disc 0 (prevent errors at the check ltr)
                 }
-                if(!song.get("disc").equals(songs.get(i+1).get("disc"))){
+                if(!Objects.requireNonNull(song.getDescription().getExtras()).getString("disc").equals(songs.get(i+1).getDescription().getExtras().getString("disc"))){
                     //if next song disc number different from current disc, sort songs by track number and then add to main array
                     discTracks.sort(new SortSongs("track"));
                     songsss.addAll(discTracks);
@@ -170,7 +170,7 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return songsss;
     }
 
-    private static class SortSongs implements Comparator<Map<String, String>>
+    private static class SortSongs implements Comparator<MediaBrowserCompat.MediaItem>
     {
         private final String key;
 
@@ -179,20 +179,20 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             this.key = key;
         }
 
-        public int compare(Map<String, String> first,
-                           Map<String, String> second)
+        public int compare(MediaBrowserCompat.MediaItem first,
+                           MediaBrowserCompat.MediaItem second)
         {
             if(key.equals("track") || key.equals("disc")){
                 //convert track/disc into integer for comparison
                 int firstValue,secondValue;
-                if(first.get(key)!=null){
-                    firstValue = Integer.parseInt(first.get(key));
+                if(first.getDescription().getExtras().getString(key)!=null){
+                    firstValue = Integer.parseInt(first.getDescription().getExtras().getString(key));
                 }
                 else{
                     firstValue = 0;
                 }
-                if(second.get(key)!=null){
-                    secondValue = Integer.parseInt(second.get(key));
+                if(second.getDescription().getExtras().getString(key)!=null){
+                    secondValue = Integer.parseInt(second.getDescription().getExtras().getString(key));
                 }
                 else{
                     secondValue = 0;
@@ -201,8 +201,8 @@ public class AlbumSongAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 return firstValue - secondValue;
             }
             else{
-                String firstValue = first.get(key);
-                String secondValue = second.get(key);
+                String firstValue = Objects.requireNonNull(first.getDescription().getExtras()).getString(key);
+                String secondValue = Objects.requireNonNull(second.getDescription().getExtras()).getString(key);
                 return firstValue.compareTo(secondValue);
             }
         }

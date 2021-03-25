@@ -2,6 +2,7 @@ package com.example.musicplayer.fragments;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.media.MediaBrowserCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MainFragment extends Fragment {
-    private final ArrayList<HashMap<String,String>> songs;
+    private final ArrayList<MediaBrowserCompat.MediaItem> songs;
     private final ArrayList<HashMap<String,String>> album;
     private final ArrayList<HashMap<String,String>> artist;
     private final ArrayList<Genre> genres;
@@ -32,7 +33,7 @@ public class MainFragment extends Fragment {
     private PlaylistFragment playlistFragment;
     private final SongFragment songFragment;
 
-    public MainFragment(ArrayList<HashMap<String,String>> songs, ArrayList<HashMap<String,String>> album, ArrayList<HashMap<String,String>> artist, ArrayList<Genre> genres, ArrayList<Playlist> playlists){
+    public MainFragment(ArrayList<MediaBrowserCompat.MediaItem> songs, ArrayList<HashMap<String,String>> album, ArrayList<HashMap<String,String>> artist, ArrayList<Genre> genres, ArrayList<Playlist> playlists){
         this.songs = songs;
         this.album = album;
         this.artist = artist;
@@ -68,7 +69,7 @@ public class MainFragment extends Fragment {
         refreshPlaylist();
     }
 
-    public void removeSong(HashMap<String,String> song){
+    public void removeSong(MediaBrowserCompat.MediaItem song){
         songs.remove(song);
         songFragment.resetSongs(songs);
     }

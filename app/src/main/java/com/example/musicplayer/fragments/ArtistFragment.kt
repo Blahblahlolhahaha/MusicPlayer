@@ -2,6 +2,7 @@ package com.example.musicplayer.fragments
 
 import android.graphics.Color
 import android.os.Bundle
+import android.support.v4.media.MediaBrowserCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,8 +15,10 @@ import com.example.musicplayer.R
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.android.material.tabs.TabLayoutMediator.TabConfigurationStrategy
+import java.util.ArrayList
+import java.util.HashMap
 
-class ArtistFragment(val name: String,val songs: ArrayList<HashMap<String, String>>, val albums: ArrayList<HashMap<String,String>>) : Fragment(){
+class ArtistFragment(val name: String, val songs: ArrayList<MediaBrowserCompat.MediaItem>, val albums: ArrayList<HashMap<String, String>>) : Fragment(){
     val tabNames: Array<String> = arrayOf("Songs","Albums")
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.artist_fragment,container,false)

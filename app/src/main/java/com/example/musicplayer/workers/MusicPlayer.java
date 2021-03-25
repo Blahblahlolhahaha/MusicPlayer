@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.MediaMetadata;
@@ -14,28 +13,33 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
+import android.view.KeyEvent;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.media.MediaBrowserServiceCompat;
 import androidx.media.app.NotificationCompat;
+import androidx.media.session.MediaButtonReceiver;
 
-import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 import com.example.musicplayer.interfaces.Callback;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
-public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListener {
+public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlayer.OnPreparedListener {
     private MediaPlayer mediaPlayer = null;
-    private ArrayList<HashMap<String,String>> original;
-    private ArrayList<HashMap<String,String>> songs;
+    private ArrayList<MediaBrowserCompat.MediaItem> original;
+    private ArrayList<MediaBrowserCompat.MediaItem> songs;
     private int current;
     private boolean shuffle;
     private String repeat;
@@ -43,6 +47,12 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
     private Callback callback;
     private MediaSessionCompat mediaSession;
     private NotificationManagerCompat notificationManager;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -69,9 +79,13 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         else{
             //if newly started
             mediaSession = new MediaSessionCompat(getApplicationContext(),"mediaSession");
+            Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+            mediaButtonIntent.setClass(getApplicationContext(), MediaButtonReceiver.class);
+            PendingIntent mediaButtonPendingIntent = PendingIntent.getBroadcast(getApplicationContext(),0,mediaButtonIntent,0);
+            mediaSession.setMediaButtonReceiver(mediaButtonPendingIntent);
             Bundle bundle = intent.getExtras();
-            original = (ArrayList<HashMap<String, String>>) bundle.get("songs");//get song list
-            songs = (ArrayList<HashMap<String, String>>) original.clone();//clone cos pass-by-value is kinda sad
+            original = (ArrayList<MediaBrowserCompat.MediaItem>) bundle.get("songs");//get song list
+            songs = (ArrayList<MediaBrowserCompat.MediaItem>) original.clone();//clone cos pass-by-value is kinda sad
             int start = bundle.getInt("start");//check starting position for song
             shuffle = getSharedPreferences("settings",0).getBoolean("shuffle",false);
             repeat = getSharedPreferences("settings",0).getString("repeat","no");
@@ -85,6 +99,9 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
             }
             configureMediaSession();
             createMusicPlayer();
+            setSessionToken(mediaSession.getSessionToken());
+            MediaButtonReceiver.handleIntent(mediaSession,intent);
+
         }
         return START_STICKY;
     }
@@ -97,11 +114,22 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         return musicPlayerBinder;
     }
 
+    @Nullable
+    @Override
+    public BrowserRoot onGetRoot(@NonNull String clientPackageName, int clientUid, @Nullable Bundle rootHints) {
+        return new BrowserRoot("Music Player", null);
+    }
+
+    @Override
+    public void onLoadChildren(@NonNull String parentId, @NonNull Result<List<MediaBrowserCompat.MediaItem>> result) {
+
+    }
+
     @Override
     public void onPrepared(MediaPlayer mediaPlayer) {
         //starts the song
         mediaPlayer.start();
-        callback.callback(songs.get(current).get("title"),songs.get(current).get("artist"),songs.get(current).get("album"),songs.get(current).get("duration"));
+        callback.callback((String) songs.get(current).getDescription().getTitle(),songs.get(current).getDescription().getExtras().getString("artist"),songs.get(current).getDescription().getExtras().getString("album"),songs.get(current).getDescription().getExtras().getString("duration"));
     }
 
     public class MusicPlayerBinder extends Binder{
@@ -175,8 +203,8 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         }
         else{
             //if shuffle is unset, returns songs to original position b4 shuffling by using the clone
-            HashMap<String,String> current_song = songs.get(current);
-            songs = (ArrayList<HashMap<String, String>>) original.clone();
+            MediaBrowserCompat.MediaItem current_song = songs.get(current);
+            songs = (ArrayList<MediaBrowserCompat.MediaItem>) original.clone();
             current = songs.indexOf(current_song);//get position of current song
         }
         return shuffle;
@@ -214,7 +242,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
 
     public void shuffle(){
         //shuffles list and sets current song as first song
-        HashMap<String,String> current_song = songs.get(current);
+        MediaBrowserCompat.MediaItem current_song = songs.get(current);
         songs.remove(current);
         Collections.shuffle(songs);
         Collections.reverse(songs);
@@ -262,7 +290,7 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
                 .setSmallIcon(R.drawable.ic_launcher_background)
                 .setOngoing(true)
                 .setVisibility(androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC)
-                .setStyle(mediaStyle)
+                .setStyle(mediaStyle.setShowActionsInCompactView(3).setMediaSession(mediaSession.getSessionToken()))
                 .addAction(new androidx.core.app.NotificationCompat.Action.Builder(R.drawable.previous,"previous",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("previous",0),intent.setAction("action_previous"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
                 .addAction(playAction)
                 .addAction(new androidx.core.app.NotificationCompat.Action.Builder(R.drawable.next,"next",PendingIntent.getService(getApplicationContext(),intent.getIntExtra("next",0),intent.setAction("action_next"),PendingIntent.FLAG_UPDATE_CURRENT)).build())
@@ -272,14 +300,14 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
 //        notificationManager.notify(10000,notification);
     }
 
-    public HashMap<String,String> getCurrentSong(){
+    public MediaBrowserCompat.MediaItem getCurrentSong(){
         return songs.get(current);
     }
 
     private void createMusicPlayer(){
         //Creates musicPlayer for playing songs
-        HashMap<String,String> currentSong = songs.get(current);//get current song
-        mediaPlayer = MediaPlayer.create(getApplicationContext(), Uri.parse(currentSong.get("data")));
+        MediaBrowserCompat.MediaItem currentSong = songs.get(current);//get current song
+        mediaPlayer = MediaPlayer.create(getApplicationContext(), Uri.parse(currentSong.getDescription().getMediaUri().toString()));
         mediaPlayer.setOnPreparedListener(this);//play song
         mediaPlayer.setOnCompletionListener(mediaPlayer1 -> {
             //when finished plays next song based on repeat status
@@ -302,10 +330,10 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
         );
     }
     @SuppressWarnings("unchecked")
-    public void reset(int position,ArrayList<HashMap<String, String>> newSongs){
+    public void reset(int position, ArrayList<MediaBrowserCompat.MediaItem> newSongs){
         //plays new song list at a position
-        original = (ArrayList<HashMap<String, String>>) newSongs.clone();
-        songs = (ArrayList<HashMap<String, String>>) original.clone();
+        original = (ArrayList<MediaBrowserCompat.MediaItem>) newSongs.clone();
+        songs = (ArrayList<MediaBrowserCompat.MediaItem>) original.clone();
         playAnotherSong(position);
         if(!mediaPlayer.isPlaying()){
             callback.setLogo(true);
@@ -320,6 +348,32 @@ public class MusicPlayer extends Service implements MediaPlayer.OnPreparedListen
             @Override
             public void onSeekTo(long pos) {
                 mediaPlayer.seekTo((int)pos);
+            }
+
+            @Override
+            public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
+                KeyEvent keyEvent = (KeyEvent) mediaButtonEvent.getExtras().get(Intent.EXTRA_KEY_EVENT);
+                if(keyEvent.getAction() == KeyEvent.ACTION_DOWN){
+                    switch(keyEvent.getKeyCode()){
+                        case KeyEvent.KEYCODE_MEDIA_PLAY:
+                            play();
+                            break;
+                        case KeyEvent.KEYCODE_MEDIA_PAUSE:
+                            pause();
+                            break;
+                        case KeyEvent.KEYCODE_MEDIA_NEXT:
+                            next();
+                            break;
+                        case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+                            previous();
+                            break;
+                        case KeyEvent.KEYCODE_MEDIA_STOP:
+                            mediaPlayer.stop();
+                            mediaPlayer.release();
+                            break;
+                    }
+                }
+                return super.onMediaButtonEvent(mediaButtonEvent);
             }
 
             @Override

@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private boolean isPlaying,album,artist,selecting,viewing,playlist,playlistSongs,genre,addSongs;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
-    private ArrayList<HashMap<String,String>> selectedSongs =  new ArrayList<>();
+    private ArrayList<MediaBrowserCompat.MediaItem> selectedSongs =  new ArrayList<>();
     private ArrayList<View> selectedViews = new ArrayList<>();
     private Playlist currentPlaylist;
     private MainFragment main;
@@ -108,15 +109,15 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 previous.setOnClickListener(view -> musicPlayer.previous());
                 next.setOnClickListener(view ->musicPlayer.next());
                 if(musicPlayer.getPlayingStatus()){
-                    HashMap<String,String> currentSong = musicPlayer.getCurrentSong();
-                    String songName = currentSong.get("title");
-                    String artist = currentSong.get("artist");
-                    String album = currentSong.get("album");
+                    MediaBrowserCompat.MediaItem currentSong = musicPlayer.getCurrentSong();
+                    String songName = (String) currentSong.getDescription().getTitle();
+                    String artist = currentSong.getDescription().getExtras().getString("artist");
+                    String album = currentSong.getDescription().getExtras().getString("album");
                     songNameTextView.setText(songName);
                     artistTextView.setText(artist);
                     Bitmap albumArt = getAlbumArt(album);
                     albumArtView.setImageBitmap(albumArt);
-                    playingFragment.setSongInfo(songName,artist,albumArt,currentSong.get("duration"));
+                    playingFragment.setSongInfo(songName,artist,albumArt,currentSong.getDescription().getExtras().getString("duration"));
                     setLogo(true);
                 }
             }
@@ -150,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         });
         delete.setOnClickListener(view->{
             DeleteDialog deleteDialog = new DeleteDialog();
-            deleteDialog.showDialog(selectedSongs,new HashMap(),MainActivity.this); //show dialog for confirmation to delete
+            deleteDialog.showDialog(selectedSongs,null,MainActivity.this); //show dialog for confirmation to delete
 //            selectedSongs.clear(); // clear the selected array after deleting/cancelling
             select(); // revert back to original view
         });
@@ -164,7 +165,12 @@ public class MainActivity extends AppCompatActivity implements Callback {
                 intent.putExtra("songs",selectedSongs);
                 intent.putExtra("start",0);
                 bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);;
-                startForegroundService(intent);
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                    startForegroundService(intent);
+                }
+                else{
+                    startService(intent);
+                }
                 play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.pause));
 
             }
@@ -175,7 +181,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
             //remove songs from playlist based on ID
             String[]IDs = new String[selectedSongs.size()];
             for(int i = 0; i<IDs.length;i++){
-                IDs[i] = selectedSongs.get(i).get("ID");
+                IDs[i] = selectedSongs.get(i).getMediaId();
             }
             this.currentPlaylist.removeSongs(IDs,getApplicationContext()); // songs are removed here
             onBackPressed(); //reset state back to normal
@@ -189,7 +195,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
             intent = new Intent(this, MusicPlayer.class);
             intent.setAction("restart_app");
             bindService(intent,serviceConnection, Context.BIND_AUTO_CREATE);
-            startForegroundService(intent);
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                startForegroundService(intent);
+            }
+            else{
+                startService(intent);
+            }
+
+
 
         }
         main = new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getGenreMap(),cacheWorker.getPlaylistMap());
@@ -281,7 +294,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         }
     }
     
-    public View.OnClickListener getSongOnclickListener(int position, ArrayList<HashMap<String,String>> songs){
+    public View.OnClickListener getSongOnclickListener(int position, ArrayList<MediaBrowserCompat.MediaItem> songs){
         return view -> {
             //checks whether if user is selecting songs or not. If selecting, selects/unselects the song based on whether it has already be selected or not
             // else, play chosen song
@@ -338,7 +351,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
-    public View.OnLongClickListener getSongOnLongClickListener(HashMap<String,String> song){
+    public View.OnLongClickListener getSongOnLongClickListener(MediaBrowserCompat.MediaItem song){
         return view -> {
             //if user long clicks, enters selecting mode if not in it already else will have same effect as clicking
             if(!selecting){
@@ -364,7 +377,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     public View.OnClickListener getArtistOnClickListener(String artistName){
         return view -> {
             //goes into artistFragment with selected artist
-            ArrayList<HashMap<String,String>> songs = cacheWorker.getArtistSongs(artistName);
+            ArrayList<MediaBrowserCompat.MediaItem> songs = cacheWorker.getArtistSongs(artistName);
             ArrayList<HashMap<String,String>> albums = cacheWorker.getArtistAlbums(artistName);
             ArtistFragment artistFragment = new ArtistFragment(artistName,songs,albums);
             fragmentTransaction(artistFragment,"artist");
@@ -376,7 +389,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         return view -> {
             //goes into AlbumSongsFragment with selected album
             String id = albumMap.get("ID");
-            ArrayList<HashMap<String,String>> albumsSongs = cacheWorker.getAlbumSongs(id);
+            ArrayList<MediaBrowserCompat.MediaItem> albumsSongs = cacheWorker.getAlbumSongs(id);
             AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(albumsSongs,getAlbumArt(id),albumMap.get("name"),albumMap.get("artist"));
             fragmentTransaction(albumSongsFragment,"album");
             album = true;
@@ -393,7 +406,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
-    public View.OnClickListener getAddSongtoPlaylistOnClickListener(final Playlist playlist,final ArrayList<HashMap<String,String>>songs){
+    public View.OnClickListener getAddSongtoPlaylistOnClickListener(final Playlist playlist,final ArrayList<MediaBrowserCompat.MediaItem> songs){
         return view->{
             //add selected songs to selected playlist and return to main fragment
             main.removePlaylist(playlist);
@@ -459,7 +472,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         return musicPlayer;
     }
 
-    public ArrayList<HashMap<String, String>> getSelectedSongs() {
+    public ArrayList<MediaBrowserCompat.MediaItem> getSelectedSongs() {
         return selectedSongs;
     }
 
@@ -486,7 +499,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         fragmentTransaction.replace(R.id.fragment,fragment).addToBackStack(name).commit();
     }
 
-    public boolean checkSelected(HashMap<String,String> song){
+    public boolean checkSelected(MediaBrowserCompat.MediaItem song){
         return selectedSongs.contains(song);
     }
 
@@ -511,7 +524,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         main.removePlaylist(playlist);
     }
 
-    public void removeSong(HashMap<String,String> song){
+    public void removeSong(MediaBrowserCompat.MediaItem song){
         main.removeSong(song);
     }
 

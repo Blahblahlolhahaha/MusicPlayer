@@ -2,6 +2,7 @@ package com.example.musicplayer.fragments;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.v4.media.MediaBrowserCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,11 +25,11 @@ import java.util.HashMap;
 import java.util.Objects;
 
 public class AlbumSongsFragment extends Fragment {
-    private final ArrayList<HashMap<String,String>> songs;
+    private final ArrayList<MediaBrowserCompat.MediaItem> songs;
     private final Bitmap albumArt;
     private final String albumName,artist;
 
-    public AlbumSongsFragment(ArrayList<HashMap<String,String>> songs, Bitmap albumArt, String albumName, String artist){
+    public AlbumSongsFragment(ArrayList<MediaBrowserCompat.MediaItem> songs, Bitmap albumArt, String albumName, String artist){
         this.songs = songs;
         this.albumArt = albumArt;
         this.albumName  = albumName;

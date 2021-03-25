@@ -1,6 +1,7 @@
 package com.example.musicplayer.fragments
 
 import android.os.Bundle
+import android.support.v4.media.MediaBrowserCompat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,13 +16,13 @@ import com.example.musicplayer.adapters.PlaylistsAdapter
 
 class PlaylistFragment:Fragment{
     private var playlists: ArrayList<Playlist>
-    private var songs: ArrayList<HashMap<String,String>> = ArrayList()
+    private var songs: ArrayList<MediaBrowserCompat.MediaItem> = ArrayList()
     private lateinit var playlistsAdapter: PlaylistsAdapter
     constructor(playlists: ArrayList<Playlist>){
         this.playlists = playlists
     }
 
-    constructor(playlists:ArrayList<Playlist>, songs: ArrayList<HashMap<String,String>>){
+    constructor(playlists:ArrayList<Playlist>, songs: ArrayList<MediaBrowserCompat.MediaItem>){
         this.playlists = playlists
         this.songs = songs
     }
