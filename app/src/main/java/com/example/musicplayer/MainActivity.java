@@ -42,14 +42,26 @@ import com.example.musicplayer.fragments.PlayingFragment;
 import com.example.musicplayer.fragments.PlaylistFragment;
 import com.example.musicplayer.fragments.PlaylistSongsFragment;
 import com.example.musicplayer.interfaces.Callback;
+import com.example.musicplayer.workers.Album;
+import com.example.musicplayer.workers.Artist;
 import com.example.musicplayer.workers.CacheWorker;
-import com.example.musicplayer.workers.Genre;
+import com.example.musicplayer.workers.Category;
 import com.example.musicplayer.workers.MusicPlayer;
 import com.example.musicplayer.workers.Playlist;
+
+import org.riversun.promise.Func;
+import org.riversun.promise.Promise;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
+import static java.lang.Thread.sleep;
 
 public class MainActivity extends AppCompatActivity implements Callback {
 
@@ -61,14 +73,14 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private ImageView albumArtView;
     private Intent intent;
     private ImageButton play,previous,next;
-    private Button details,add,delete,playSelected,remove;
+    private Button details,delete,remove;
     private ServiceConnection serviceConnection;
     private LinearLayoutCompat playing,select;
     private boolean isPlaying,album,artist,selecting,viewing,playlist,playlistSongs,genre,addSongs;
     private PlayingFragment playingFragment;
     private CacheWorker cacheWorker;
-    private ArrayList<MediaBrowserCompat.MediaItem> selectedSongs =  new ArrayList<>();
-    private ArrayList<View> selectedViews = new ArrayList<>();
+    private final ArrayList<MediaBrowserCompat.MediaItem> selectedSongs =  new ArrayList<>();
+    private final ArrayList<View> selectedViews = new ArrayList<>();
     private Playlist currentPlaylist;
     private MainFragment main;
     private BroadcastReceiver broadcastReceiver;
@@ -85,10 +97,10 @@ public class MainActivity extends AppCompatActivity implements Callback {
         next = findViewById(R.id.next);
         playing = findViewById(R.id.playing);
         select = findViewById(R.id.selecting);
-        add = findViewById(R.id.addd);
+        Button add = findViewById(R.id.addd);
         details = findViewById(R.id.details);
         delete = findViewById(R.id.delete);
-        playSelected = findViewById(R.id.play_selected);
+        Button playSelected = findViewById(R.id.play_selected);
         remove = findViewById(R.id.remove);
         serviceConnection = new ServiceConnection() {
             @Override
@@ -201,9 +213,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
             else{
                 startService(intent);
             }
-
-
-
         }
         main = new MainFragment(cacheWorker.getSongsMap(),cacheWorker.getAlbumMap(),cacheWorker.getArtistMap(),cacheWorker.getGenreMap(),cacheWorker.getPlaylistMap());
         fragmentTransaction(main,"original"); // instantiate first view
@@ -374,25 +383,22 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
-    public View.OnClickListener getArtistOnClickListener(String artistName){
+    public View.OnClickListener getArtistOnClickListener(final Artist artist){
         return view -> {
             //goes into artistFragment with selected artist
-            ArrayList<MediaBrowserCompat.MediaItem> songs = cacheWorker.getArtistSongs(artistName);
-            ArrayList<HashMap<String,String>> albums = cacheWorker.getArtistAlbums(artistName);
-            ArtistFragment artistFragment = new ArtistFragment(artistName,songs,albums);
+            ArrayList<Album> albums = cacheWorker.getArtistAlbums(artist.getName());
+            ArtistFragment artistFragment = new ArtistFragment(artist.getName(),artist.getSongs(),albums);
             fragmentTransaction(artistFragment,"artist");
-            artist = true;
+            this.artist = true;
         };
     }
 
-    public View.OnClickListener getAlbumOnClickListener(final HashMap<String,String> albumMap){
+    public View.OnClickListener getAlbumOnClickListener(final Album album){
         return view -> {
             //goes into AlbumSongsFragment with selected album
-            String id = albumMap.get("ID");
-            ArrayList<MediaBrowserCompat.MediaItem> albumsSongs = cacheWorker.getAlbumSongs(id);
-            AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(albumsSongs,getAlbumArt(id),albumMap.get("name"),albumMap.get("artist"));
+            AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(album.getSongs(),getAlbumArt(album.getID()),album.getName(),album.getArtist());
             fragmentTransaction(albumSongsFragment,"album");
-            album = true;
+            this.album = true;
         };
     }
 
@@ -417,7 +423,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
         };
     }
 
-    public View.OnClickListener getGenreOnClickListener(final Genre genre){
+    public View.OnClickListener getGenreOnClickListener(final Category genre){
         return view->{
             GenreSongsFragment genreSongsFragment = new GenreSongsFragment(genre.getSongs(),genre.getName());
             fragmentTransaction(genreSongsFragment,"genre");
@@ -456,17 +462,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
     public Bitmap getAlbumArt(String album){
         return cacheWorker.getAlbumArt(album);
     }
-
-    public Bitmap getArtistAlbumArt(String artist){
-        return cacheWorker.getArtistAlbumArt(artist);
-    }
-
-    public Bitmap getGenreAlbumArt(String album){
-        return cacheWorker.getAlbumArt(album);
-    }
-
-    public String getAlbumName(String ID){return cacheWorker.getAlbumName(ID);}
-
     public String getAlbumID(String name){return cacheWorker.getAlbumID(name);}
 
     public MusicPlayer getMusicPlayer(){
@@ -479,10 +474,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public CacheWorker getCacheWorker() {
         return cacheWorker;
-    }
-
-    public void setCurrentPlaylist(Playlist currentPlaylist) {
-        this.currentPlaylist = currentPlaylist;
     }
 
     public void setSelecting(boolean selecting) {
@@ -502,10 +493,6 @@ public class MainActivity extends AppCompatActivity implements Callback {
 
     public boolean checkSelected(MediaBrowserCompat.MediaItem song){
         return selectedSongs.contains(song);
-    }
-
-    public void addToSelectedViews(View view){
-
     }
 
     public void addPlaylist(Playlist playlist,boolean addSongs){

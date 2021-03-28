@@ -52,7 +52,7 @@ class DetailsEditFragment(val song: MediaBrowserCompat.MediaItem) : Fragment() {
         songEdit.setText(song.description.title)
         artistEdit.setText(song.description.extras?.getString("artist"))
         val mainActivity = context as MainActivity
-        albumEdit.setText(mainActivity.getAlbumName(song.description.extras?.getString("album")))
+        albumEdit.setText(song.description.extras?.getString("album"))
         val disc: String? = song.description.extras?.getString("disc")
         discEdit.setText(if (disc.equals(null)) "1" else disc)
         trackEdit.setText(song.description.extras?.getString("track"))
@@ -96,26 +96,24 @@ class DetailsEditFragment(val song: MediaBrowserCompat.MediaItem) : Fragment() {
                 toolbar.visibility = View.VISIBLE
                 cancelButton.visibility = View.GONE
                 saveButton.visibility = View.GONE
-                if(!mainActivity.getAlbumID(musicMetadata.album).equals("")){
-                    val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song.mediaId!!).toLong())
-                    val values = ContentValues()
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        values.put(MediaStore.Audio.Media.IS_PENDING, 1)
-                    }
-                    val contentResolver = mainActivity.contentResolver
-                    contentResolver.update(uri, values, null, null)
-                    values.clear()
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        values.put(MediaStore.Audio.Media.IS_PENDING, 0)
-                    }
-                    values.put(MediaStore.Audio.Media.TITLE, musicMetadata.songTitle)
-                    values.put(MediaStore.Audio.Media.ARTIST, musicMetadata.artist)
-                    values.put(MediaStore.Audio.Media.ALBUM, musicMetadata.album)
-                    values.put(MediaStore.Audio.Media.TRACK, musicMetadata.trackNumber.toString())
-                    values.put(MediaStore.Audio.Media.YEAR, musicMetadata.year)
-                    contentResolver.update(uri, values, null, null)
+                val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song.mediaId!!).toLong())
+                val values = ContentValues()
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    values.put(MediaStore.Audio.Media.IS_PENDING, 1)
                 }
-                else{
+                val contentResolver = mainActivity.contentResolver
+                contentResolver.update(uri, values, null, null)
+                values.clear()
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    values.put(MediaStore.Audio.Media.IS_PENDING, 0)
+                }
+                values.put(MediaStore.Audio.Media.TITLE, musicMetadata.songTitle)
+                values.put(MediaStore.Audio.Media.ARTIST, musicMetadata.artist)
+                values.put(MediaStore.Audio.Media.ALBUM, musicMetadata.album)
+                values.put(MediaStore.Audio.Media.TRACK, musicMetadata.trackNumber.toString())
+                values.put(MediaStore.Audio.Media.YEAR, musicMetadata.year)
+                contentResolver.update(uri, values, null, null)
+                if(mainActivity.getAlbumID(musicMetadata.album).equals("")){
                     Toast.makeText(context,"Album does not exist yet in this device! It will take awhile for the device to pick up the changes!",Toast.LENGTH_SHORT).show()
                 }
                 mainActivity.onBackPressed()

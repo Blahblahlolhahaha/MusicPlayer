@@ -11,9 +11,11 @@ import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
+import com.example.musicplayer.workers.Artist
+import com.example.musicplayer.workers.Category
 import kotlin.collections.HashMap
 
-class ArtistsAdapter(val artists: ArrayList<HashMap<String,String>>, val context: Context): RecyclerView.Adapter<ArtistsAdapter.ArtistViewHolder>() {
+class ArtistsAdapter(val artists: ArrayList<Artist>, val context: Context): RecyclerView.Adapter<ArtistsAdapter.ArtistViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArtistViewHolder {
         val cardView: CardView = LayoutInflater.from(parent.context).inflate(R.layout.artist_card,parent,false) as CardView
@@ -24,13 +26,13 @@ class ArtistsAdapter(val artists: ArrayList<HashMap<String,String>>, val context
         val albumArtView: ImageView = holder.cardView.findViewById(R.id.album_art)
         val artistTextView: TextView = holder.cardView.findViewById(R.id.artist)
         val trackAlbumTextView: TextView = holder.cardView.findViewById(R.id.tracks)
-        val artist: HashMap<String,String> = artists.get(position)
-        artistTextView.setText(artist.get("name"))
-        val trackAlbum: String = String.format("%s tracks| %s albums",artist.get("tracks"),artist.get("albums"))
+        val artist: Artist = artists.get(position)
+        artistTextView.setText(artist.name)
+        val trackAlbum: String = String.format("%s tracks| %s albums",artist.tracks,artist.albums)
         trackAlbumTextView.setText(trackAlbum);
-        val albumArt: Bitmap = (context as MainActivity).getArtistAlbumArt(artist.get("name"))//get album art based on first song of artist
+        val albumArt: Bitmap = (context as MainActivity).getAlbumArt(artist.firstSongAlbum)//get album art based on first song of artist
         albumArtView.setImageBitmap(albumArt)
-        holder.bind(context.getArtistOnClickListener(artist.get("name")))
+        holder.bind(context.getArtistOnClickListener(artist))
     }
 
     override fun getItemCount(): Int {

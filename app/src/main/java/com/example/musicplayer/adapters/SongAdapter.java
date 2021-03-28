@@ -2,7 +2,7 @@ package com.example.musicplayer.adapters;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.media.browse.MediaBrowser;
+import android.graphics.BitmapFactory;
 import android.support.v4.media.MediaBrowserCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.LinearLayoutCompat;
+import androidx.arch.core.executor.TaskExecutor;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,7 +20,11 @@ import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder>{
     private final ArrayList<MediaBrowserCompat.MediaItem> songs;
@@ -43,8 +48,8 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         TextView songName = holder.cardView.findViewById(R.id.song);
         TextView duration = holder.cardView.findViewById(R.id.duration);
         LinearLayoutCompat linearLayout = holder.cardView.findViewById(R.id.background);
-        Bitmap album_art = ((MainActivity)context).getAlbumArt(songs.get(position).getDescription().getExtras().getString("album"));
-        albumArt.setImageBitmap(album_art);
+        Bitmap image = ((MainActivity)context).getAlbumArt(song.getDescription().getExtras().getString("albumID"));
+        albumArt.setImageBitmap(image);
         artist.setText(song.getDescription().getExtras().getString("artist"));
         songName.setText(song.getDescription().getTitle());
         duration.setText(song.getDescription().getExtras().getString("duration"));

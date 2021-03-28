@@ -10,9 +10,9 @@ import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
-import com.example.musicplayer.workers.Genre
+import com.example.musicplayer.workers.Category
 
-class GenreAdapter(val genres:ArrayList<Genre>, val context: Context): RecyclerView.Adapter<GenreAdapter.GenreViewHolder>() {
+class GenreAdapter(val genres:ArrayList<Category>, val context: Context): RecyclerView.Adapter<GenreAdapter.GenreViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GenreViewHolder {
         val cardView: CardView = LayoutInflater.from(context).inflate(R.layout.display_card,parent,false) as CardView
         return GenreViewHolder(cardView)
@@ -23,7 +23,7 @@ class GenreAdapter(val genres:ArrayList<Genre>, val context: Context): RecyclerV
         val textView = holder.cardView.findViewById<TextView>(R.id.card_title)
         val albumArt = holder.cardView.findViewById<ImageView>(R.id.album_art)
         textView.text = genre.name
-        albumArt.setImageBitmap((context as MainActivity).getGenreAlbumArt(genre.firstSongAlbum))
+        albumArt.setImageBitmap((context as MainActivity).getAlbumArt(genre.firstSongAlbum))
         holder.bind(context.getGenreOnClickListener(genre))
     }
 

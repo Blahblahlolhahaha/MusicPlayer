@@ -15,7 +15,9 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.musicplayer.R;
-import com.example.musicplayer.workers.Genre;
+import com.example.musicplayer.workers.Album;
+import com.example.musicplayer.workers.Artist;
+import com.example.musicplayer.workers.Category;
 import com.example.musicplayer.workers.Playlist;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -25,15 +27,15 @@ import java.util.HashMap;
 
 public class MainFragment extends Fragment {
     private final ArrayList<MediaBrowserCompat.MediaItem> songs;
-    private final ArrayList<HashMap<String,String>> album;
-    private final ArrayList<HashMap<String,String>> artist;
-    private final ArrayList<Genre> genres;
+    private final ArrayList<Album> album;
+    private final ArrayList<Artist> artist;
+    private final ArrayList<Category> genres;
     private final ArrayList<Playlist> playlists;
     private final String[] tabNames = {"Songs","Albums","Artists","Genres","Playlists"};
     private PlaylistFragment playlistFragment;
     private final SongFragment songFragment;
 
-    public MainFragment(ArrayList<MediaBrowserCompat.MediaItem> songs, ArrayList<HashMap<String,String>> album, ArrayList<HashMap<String,String>> artist, ArrayList<Genre> genres, ArrayList<Playlist> playlists){
+    public MainFragment(ArrayList<MediaBrowserCompat.MediaItem> songs, ArrayList<Album> album, ArrayList<Artist> artist, ArrayList<Category> genres, ArrayList<Playlist> playlists){
         this.songs = songs;
         this.album = album;
         this.artist = artist;

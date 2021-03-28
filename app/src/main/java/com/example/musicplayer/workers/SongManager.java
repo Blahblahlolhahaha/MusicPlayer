@@ -3,15 +3,14 @@ package com.example.musicplayer.workers;
 import android.support.v4.media.MediaBrowserCompat;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class SongManager {
     private final ArrayList<MediaBrowserCompat.MediaItem> songs;
-    private final ArrayList<HashMap<String,String>> albums;
-    private final ArrayList<HashMap<String,String>> artists;
-    private final ArrayList<Genre> genres;
+    private final ArrayList<Album> albums;
+    private final ArrayList<Artist> artists;
+    private final ArrayList<Category> genres;
     private final ArrayList<Playlist> playlists;
-    public SongManager(ArrayList<MediaBrowserCompat.MediaItem> s, ArrayList<HashMap<String,String>> a, ArrayList<HashMap<String,String>> b, ArrayList<Genre> c, ArrayList<Playlist> d){
+    public SongManager(ArrayList<MediaBrowserCompat.MediaItem> s, ArrayList<Album> a, ArrayList<Artist> b, ArrayList<Category> c, ArrayList<Playlist> d){
         songs = s;
         albums = a;
         artists = b;
@@ -23,11 +22,11 @@ public class SongManager {
         return songs;
     }
 
-    public ArrayList<HashMap<String,String>> getAlbums() {
+    public ArrayList<Album> getAlbums() {
         return albums;
     }
 
-    public ArrayList<HashMap<String,String>> getArtists() {
+    public ArrayList<Artist> getArtists() {
         return artists;
     }
 
@@ -35,7 +34,7 @@ public class SongManager {
         return playlists;
     }
 
-    public ArrayList<Genre> getGenres() {
+    public ArrayList<Category> getGenres() {
         return genres;
     }
 }

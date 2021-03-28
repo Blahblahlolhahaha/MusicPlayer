@@ -136,7 +136,7 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
     public void onPrepared(MediaPlayer mediaPlayer) {
         //starts the song
         mediaPlayer.start();
-        callback.callback((String) songs.get(current).getDescription().getTitle(),songs.get(current).getDescription().getExtras().getString("artist"),songs.get(current).getDescription().getExtras().getString("album"),songs.get(current).getDescription().getExtras().getString("duration"));
+        callback.callback((String) songs.get(current).getDescription().getTitle(),songs.get(current).getDescription().getExtras().getString("artist"),songs.get(current).getDescription().getExtras().getString("albumID"),songs.get(current).getDescription().getExtras().getString("duration"));
     }
 
     public class MusicPlayerBinder extends Binder{
@@ -150,7 +150,12 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
     }
 
     public int getPosition(){
-        return mediaPlayer.getCurrentPosition();
+        int position  = mediaPlayer.getCurrentPosition();
+        mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()
+                .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE|PlaybackStateCompat.ACTION_SKIP_TO_NEXT|PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS|PlaybackStateCompat.ACTION_SEEK_TO )
+                .setState(PlaybackStateCompat.STATE_PLAYING,position,1.0f)
+                .build());
+        return position;
     }
 
     public void setPosition(int position){

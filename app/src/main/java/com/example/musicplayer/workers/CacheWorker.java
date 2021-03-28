@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
@@ -25,13 +24,15 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class CacheWorker {
     private final LruCache<String, Bitmap> albumArtCache;
     private DiskLruCache cache;
     private final Object cacheLock = new Object();
-    private boolean initialising = true;
+    private final Object loadingAlbum = new Object();
+    private boolean initialising,loading = true;
     private SongManager songManager;
     private Context context;
     public CacheWorker(Context context,String cacheDirectory){
@@ -44,11 +45,11 @@ public class CacheWorker {
         new BitmapWorkerTask().execute(songManager.getAlbums());
     }
 
-    public ArrayList<HashMap<String,String>> getAlbumMap(){
+    public ArrayList<Album> getAlbumMap(){
         return songManager.getAlbums();
     }
 
-    public ArrayList<HashMap<String, String>> getArtistMap(){
+    public ArrayList<Artist> getArtistMap(){
         return songManager.getArtists();
     }
 
@@ -56,78 +57,44 @@ public class CacheWorker {
         return songManager.getSongs();
     }
 
-    public ArrayList<Genre> getGenreMap(){
+    public ArrayList<Category> getGenreMap(){
         return songManager.getGenres();
     }
 
     public ArrayList<Playlist> getPlaylistMap() { return songManager.getPlaylists(); }
 
-
-    public String getAlbumName(String ID){
-        for (HashMap<String,String> album:
-                getAlbumMap()) {
-            if(album.get("ID").equals(ID)){
-                return album.get("name");
-            }
-        }
-        return "";
-    }
-
     public String getAlbumID(String name){
-        for (HashMap<String,String> album:
+        for (Album album:
                 getAlbumMap()) {
-            if(album.get("name").equals(name)){
-                return album.get("ID");
+            if(album.getName().equals(name)){
+                return album.getID();
             }
         }
         return "";
     }
 
-    public Bitmap getAlbumArt(String albumID){
-        return albumArtCache.get(albumID);
-    }
-
-    public Bitmap getArtistAlbumArt(String artist){
-        for (MediaBrowserCompat.MediaItem song:
-                getSongsMap()) {
-            if(song.getDescription().getExtras().getString("artist").equals(artist)){
-                return albumArtCache.get(song.getDescription().getExtras().getString("album"));
+    public Bitmap getAlbumArt(String albumID) {
+        synchronized (loadingAlbum) {
+            while (loading) {
+                try {
+                    loadingAlbum.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
+            return albumArtCache.get(albumID);
         }
-        return BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
     }
 
-    public ArrayList<MediaBrowserCompat.MediaItem> getArtistSongs(String artist){
-        ArrayList<MediaBrowserCompat.MediaItem> artistSongs = new ArrayList<>();
-        for (MediaBrowserCompat.MediaItem song:
-                getSongsMap()) {
-            if(song.getDescription().getExtras().getString("artist").equals(artist)){
-                artistSongs.add(song);
-            }
-        }
-        return artistSongs;
-    }
-
-    public ArrayList<HashMap<String,String>> getArtistAlbums(String artist){
-        ArrayList<HashMap<String,String>> artistAlbums = new ArrayList<>();
-        for (HashMap<String,String> album:
+    public ArrayList<Album> getArtistAlbums(String artist){
+        ArrayList<Album> artistAlbums = new ArrayList<>();
+        for (Album album:
                 getAlbumMap()) {
-            if(album.get("artist").equals(artist)){
+            if(album.getArtist().equals(artist)){
                 artistAlbums.add(album);
             }
         }
         return artistAlbums;
-    }
-
-    public ArrayList<MediaBrowserCompat.MediaItem> getAlbumSongs(String albumID){
-        ArrayList<MediaBrowserCompat.MediaItem> albumSongs = new ArrayList<>();
-        for (MediaBrowserCompat.MediaItem song:
-             getSongsMap()) {
-            if(song.getDescription().getExtras().getString("album").equals(albumID)){
-                albumSongs.add(song);
-            }
-        }
-        return albumSongs;
     }
 
     private void storeCache(Bitmap albumArt,String album){
@@ -201,50 +168,56 @@ public class CacheWorker {
 
 
 
-    private class BitmapWorkerTask extends AsyncTask<ArrayList<HashMap<String,String>>,Void,Void>{
+    private class BitmapWorkerTask extends AsyncTask<ArrayList<Album>,Void,Void>{
         @SafeVarargs
         @Override
-        protected final Void doInBackground(ArrayList<HashMap<String, String>>... albums) {
+        protected final Void doInBackground(ArrayList<Album>... albums) {
             if(albums != null){
-                for (HashMap<String,String> album:albums[0]
-                ) {
-                    String albumID = album.get("ID");
-                    if(albumArtCache.get(albumID) == null){
-                        Bitmap albumArt = getCache(albumID);
-                        if(albumArt == null){
-                            MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-                            try{
-                                for (MediaBrowserCompat.MediaItem song:
-                                        songManager.getSongs()) {
-                                    if(song.getDescription().getExtras().getString("album").equals(albumID)){
-                                        mediaMetadataRetriever.setDataSource(song.getDescription().getMediaUri().toString());
+                synchronized (loadingAlbum){
+                    for (Category album:albums[0]
+                    ) {
+                        String albumID = album.getID();
+                        if(albumArtCache.get(albumID) == null){
+                            Bitmap albumArt = getCache(albumID);
+                            if(albumArt == null){
+                                MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+                                try{
+                                    for (MediaBrowserCompat.MediaItem song:
+                                            songManager.getSongs()) {
+                                        if(song.getDescription().getExtras().getString("albumID").equals(albumID)){
+                                            mediaMetadataRetriever.setDataSource(song.getDescription().getMediaUri().toString());
+                                        }
                                     }
+                                }catch(RuntimeException e){
+                                    Log.d("sad", "doInBackground: sad");
                                 }
-                            }catch(RuntimeException e){
-                                Log.d("sad", "doInBackground: sad");
-                            }
 
-                            byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
-                            if(albumBytes == null){
-                                albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-                            }
-                            else{
-                                albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
-                                if(albumArt == null){
+                                byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
+                                if(albumBytes == null){
                                     albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
                                 }
+                                else{
+                                    albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
+                                    if(albumArt == null){
+                                        albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
+                                    }
+                                }
+                                albumArtCache.put(albumID,albumArt);
+                                storeCache(albumArt,albumID);
+                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                                    mediaMetadataRetriever.close();
+                                }
+
                             }
+
                             albumArtCache.put(albumID,albumArt);
-                            storeCache(albumArt,albumID);
-                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                                mediaMetadataRetriever.close();
-                            }
-
                         }
-
-                        albumArtCache.put(albumID,albumArt);
                     }
+                    loading = false;
+                    loadingAlbum.notifyAll();
+
                 }
+
             }
 
             return null;
@@ -261,7 +234,8 @@ public class CacheWorker {
                     MediaStore.Audio.Media.TITLE,
                     MediaStore.Audio.Media.DATA,
                     MediaStore.Audio.Media.DISPLAY_NAME,
-                    MediaStore.Audio.Media.ARTIST_ID,
+                    MediaStore.Audio.Media.ARTIST,
+                    MediaStore.Audio.Media.ALBUM,
                     MediaStore.Audio.Media.ALBUM_ID,
                     MediaStore.Audio.Media.YEAR,
                     MediaStore.Audio.Media.TRACK,
@@ -275,10 +249,12 @@ public class CacheWorker {
                     MediaStore.Audio.Media.TITLE,
                     MediaStore.Audio.Media.DATA,
                     MediaStore.Audio.Media.DISPLAY_NAME,
-                    MediaStore.Audio.Media.ARTIST_ID,
+                    MediaStore.Audio.Media.ARTIST,
+                    MediaStore.Audio.Media.ALBUM,
                     MediaStore.Audio.Media.ALBUM_ID,
                     MediaStore.Audio.Media.YEAR,
                     MediaStore.Audio.Media.TRACK,
+
             };
         }
         String[] projection1 = {
@@ -331,43 +307,27 @@ public class CacheWorker {
         );
 
         ArrayList<MediaBrowserCompat.MediaItem> songs = new ArrayList<>();
-        ArrayList<HashMap<String,String>> artists = new ArrayList<>();
-        ArrayList<HashMap<String,String>> albums = new ArrayList<>();
-        ArrayList<Genre> genres = new ArrayList<>();
+        ArrayList<Artist> artists = new ArrayList<>();
+        ArrayList<Album> albums = new ArrayList<>();
+        ArrayList<Category> genres = new ArrayList<>();
         ArrayList<Playlist> playlists = new ArrayList<>();
-        while(artistCursor.moveToNext()){
-            HashMap<String,String> artist = new HashMap<>();
-            artist.put("ID",artistCursor.getString(0));
-            artist.put("name",artistCursor.getString(1));
-            artist.put("tracks",artistCursor.getString(2));
-            artist.put("albums",artistCursor.getString(3));
-            artists.add(artist);
-        }
-        while(albumCursor.moveToNext()){
-            HashMap<String,String> album = new HashMap<>();
-            album.put("ID",albumCursor.getString(0));
-            album.put("name",albumCursor.getString(1));
-            album.put("artist",albumCursor.getString(2));
-            albums.add(album);
-        }
+
         while(cursor.moveToNext()){
             Bundle otherDetails = new Bundle();
             if(cursor.getString(4) != null){
-                String ID = cursor.getString(4);
-                for(HashMap<String,String>artist
-                        :artists){
-                    if(artist.get("ID").equals(ID)){
-                        otherDetails.putString("artist",artist.get("name"));
-                    }
-                }
+                otherDetails.putString("artist",cursor.getString(4));
             }
             else{
                 otherDetails.putString("artist","Unknown");
             }
             otherDetails.putString("album",cursor.getString(5)==null?"Unknown":cursor.getString(5));
-            otherDetails.putString("year",cursor.getString(6));
-            String track = cursor.getString(7);
-            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.Q){
+            otherDetails.putString("albumID",cursor.getString(6)==null?"Unknown":cursor.getString(6));
+            otherDetails.putString("year",cursor.getString(7));
+            String track = cursor.getString(8);
+            if(track == null){
+                otherDetails.putString("track","0");
+            }
+            else{
                 if(track.length() == 4){
                     String disc = track.substring(0,1);
                     String trackNum = String.valueOf(Integer.parseInt(track.substring(1)));
@@ -378,16 +338,8 @@ public class CacheWorker {
                     otherDetails.putString("track",track);
                 }
             }
-            else{
-                if(track != null){
-                    otherDetails.putString("track",track.split("/")[0]);
-                }
-                else{
-                    otherDetails.putString("track","1");
-                }
-            }
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                otherDetails.putString("duration",formatDuration(Long.parseLong(cursor.getString(8))));
+                otherDetails.putString("duration",formatDuration(Long.parseLong(cursor.getString(9))));
             }
             else{
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever();
@@ -407,6 +359,32 @@ public class CacheWorker {
             songs.add(song);
         }
         songs.sort(new SortSongs("title"));
+
+        while(artistCursor.moveToNext()){
+            ArrayList<MediaBrowserCompat.MediaItem> artistSongs = new ArrayList<>();
+            String name  = artistCursor.getString(1);
+            for(MediaBrowserCompat.MediaItem song : songs){
+                if(song.getDescription().getExtras().getString("artist").equals(name)){
+                    artistSongs.add(song);
+                }
+            }
+            Artist artist = new Artist(artistCursor.getString(0),name,artistCursor.getString(2),artistCursor.getString(3),artistSongs);
+            artists.add(artist);
+        }
+
+        while(albumCursor.moveToNext()){
+            ArrayList<MediaBrowserCompat.MediaItem> albumSongs = new ArrayList<>();
+            String albumID = albumCursor.getString(0);
+            for(MediaBrowserCompat.MediaItem song : songs){
+                if(song.getDescription().getExtras().getString("albumID").equals(albumID)){
+                    albumSongs.add(song);
+                }
+            }
+            Album album = new Album(albumID,albumCursor.getString(1),albumCursor.getString(2),albumSongs);
+            albums.add(album);
+        }
+
+
         while(playlistCursor.moveToNext()){
             String id = playlistCursor.getString(0);
             long idLong = Long.parseLong(id);
@@ -432,9 +410,13 @@ public class CacheWorker {
             playlists.add(new Playlist(id,playlistCursor.getString(1),playListSongs));
             playlistSongCursor.close();
         }
+
         while(genreCursor.moveToNext()){
             ArrayList<MediaBrowserCompat.MediaItem> genreSongs = new ArrayList<>();
             String ID = genreCursor.getString(0);
+            if(ID == null){
+                break;
+            }
             long idLong = Long.parseLong(ID);
             String name = genreCursor.getString(1);
             String[] projection5 = {
@@ -455,7 +437,7 @@ public class CacheWorker {
                     }
                 }
             }
-            genres.add(new Genre(ID,name,genreSongs));
+            genres.add(new Category(ID,name,genreSongs));
         }
         albumCursor.close();
         artistCursor.close();

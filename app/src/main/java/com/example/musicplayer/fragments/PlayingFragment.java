@@ -168,15 +168,26 @@ public class PlayingFragment extends Fragment {
     private class PositionThread extends Thread {
         @Override
         public void run() {
-            while(musicPlayer.getPlayingStatus()){
-                if(!stop){
-                    int position = musicPlayer.getPosition();
-                    seekBar.setProgress(position);
+            try{
+                while(musicPlayer.getPlayingStatus()){
+                    if(!stop){
+                        int position = musicPlayer.getPosition();
+                        seekBar.setProgress(position);
+                    }
+                    else{
+                        break;
+                    }
                 }
-                else{
-                    break;
+            }catch(IllegalStateException e){
+                try {
+                    sleep(100);
+                    run();
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
                 }
+
             }
+
         }
     }
 }

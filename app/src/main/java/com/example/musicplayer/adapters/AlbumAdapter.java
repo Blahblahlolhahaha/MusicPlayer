@@ -14,15 +14,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
+import com.example.musicplayer.workers.Album;
+import com.example.musicplayer.workers.Category;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHolder> {
-    private final ArrayList<HashMap<String,String>> albums;
+    private final ArrayList<Album> albums;
     private final Context context;
 
-    public AlbumAdapter(ArrayList<HashMap<String,String>> albums, Context context){
+    public AlbumAdapter(ArrayList<Album> albums, Context context){
         this.albums = albums;
         this.context = context;
     }
@@ -38,13 +40,13 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
     @Override
     public void onBindViewHolder(@NonNull AlbumViewHolder holder, int position) {
         //Sets album information on the CardView
-        HashMap<String,String> currentAlbum = albums.get(position);
+        Album currentAlbum = albums.get(position);
         ImageView albumArt = holder.cardView.findViewById(R.id.album_art);
         TextView album = holder.cardView.findViewById(R.id.album);
         TextView artist = holder.cardView.findViewById(R.id.artist);
-        String albumID = currentAlbum.get("ID");
-        album.setText(currentAlbum.get("name"));
-        artist.setText(currentAlbum.get("artist"));
+        String albumID = currentAlbum.getID();
+        album.setText(currentAlbum.getName());
+        artist.setText(currentAlbum.getArtist());
         Bitmap album_art = ((MainActivity) context).getAlbumArt(albumID);
         albumArt.setImageBitmap(album_art);
         holder.bind(((MainActivity)context).getAlbumOnClickListener(currentAlbum)); //gets the listener for each album

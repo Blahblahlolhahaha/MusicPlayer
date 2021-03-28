@@ -10,36 +10,13 @@ import android.support.v4.media.MediaBrowserCompat;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Playlist {
+public class Playlist extends Category{
 
-    private String ID;
-    private String name;
-    private ArrayList<MediaBrowserCompat.MediaItem> songs;
     private Uri playlistUri;
+
     public Playlist(String ID, String name, ArrayList<MediaBrowserCompat.MediaItem> songs){
-        this.ID = ID;
-        this.name = name;
-        this.songs = songs;
+        super(ID,name,songs);
         playlistUri = MediaStore.Audio.Playlists.Members.getContentUri("external", Long.parseLong(ID));
-    }
-
-    public String getID() {
-        return ID;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public ArrayList<MediaBrowserCompat.MediaItem> getSongs() {
-        return songs;
-    }
-
-    public String getFirstSongAlbum(){
-        if(songs.size() != 0){
-            return songs.get(0).getDescription().getExtras().getString("album");
-        }
-        return "";
     }
 
     public void addSongs(ArrayList<MediaBrowserCompat.MediaItem>songs, Context context){

@@ -12,13 +12,14 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
+import com.example.musicplayer.workers.Album
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.android.material.tabs.TabLayoutMediator.TabConfigurationStrategy
 import java.util.ArrayList
 import java.util.HashMap
 
-class ArtistFragment(val name: String, val songs: ArrayList<MediaBrowserCompat.MediaItem>, val albums: ArrayList<HashMap<String, String>>) : Fragment(){
+class ArtistFragment(val name: String, val songs: ArrayList<MediaBrowserCompat.MediaItem>, val albums: ArrayList<Album>) : Fragment(){
     val tabNames: Array<String> = arrayOf("Songs","Albums")
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.artist_fragment,container,false)

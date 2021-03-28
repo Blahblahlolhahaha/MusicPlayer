@@ -49,6 +49,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "com.google.android.material:material:$version"
     implementation "com.hendraanggrian.material:collapsingtoolbarlayout-subtitle:1.1.0"
+    implementation group: 'org.riversun', name: 'java-promise', version: '1.1.0'
 }
 repositories {
     maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
