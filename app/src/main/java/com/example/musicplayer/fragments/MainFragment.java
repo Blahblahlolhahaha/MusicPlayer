@@ -31,7 +31,7 @@ public class MainFragment extends Fragment {
     private final ArrayList<Artist> artist;
     private final ArrayList<Category> genres;
     private final ArrayList<Playlist> playlists;
-    private final String[] tabNames = {"Songs","Albums","Artists","Genres","Playlists"};
+    private final String[] tabNames = {"Songs","Albums","Artists","Genres","Playlists","Search"};
     private PlaylistFragment playlistFragment;
     private final SongFragment songFragment;
 
@@ -57,6 +57,7 @@ public class MainFragment extends Fragment {
         ViewPager2 viewPager2 = view.findViewById(R.id.pager);
         TabLayout tabLayout = view.findViewById(R.id.tabs);
         tabLayout.setTabTextColors(Color.parseColor("#FFFFFF"),Color.parseColor("#FFFFFF"));
+        tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
         viewPager2.setAdapter(adapter);
         new TabLayoutMediator(tabLayout, viewPager2,((tab, position) -> {tab.setText(tabNames[position]);})).attach();
     }
@@ -101,13 +102,15 @@ public class MainFragment extends Fragment {
                     return new GenreFragment(genres);
                 case 4:
                     return playlistFragment;
+                case 5:
+                    return new SearchFragment(songs,album,artist);
                 default:
                     return songFragment;
             }
         }
         @Override
         public int getItemCount() {
-            return 5;
+            return 6;
         }
     }
 }

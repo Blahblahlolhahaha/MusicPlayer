@@ -28,4 +28,5 @@
     <string name="create">Create</string>
     <string name="remove">Remove</string>
     <string name="delete_playlist">Delete Playlist?</string>
+    <string name="search_hint">What would you like to search today?</string>
 </resources>

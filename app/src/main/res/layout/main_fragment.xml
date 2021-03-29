@@ -9,8 +9,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:tabPadding="20dp"
+        app:tabMinWidth="80dp"
         app:tabTextAppearance="@style/tablayoutappearance"
-        app:tabMode="fixed"
+        app:tabMode="scrollable"
         app:tabGravity="fill"/>
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/pager"
