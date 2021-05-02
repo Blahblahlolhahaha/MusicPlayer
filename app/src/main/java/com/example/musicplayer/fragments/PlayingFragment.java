@@ -190,4 +190,13 @@ public class PlayingFragment extends Fragment {
 
         }
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(thread.isAlive()){
+            thread.interrupt();
+        }
+    }
+
 }

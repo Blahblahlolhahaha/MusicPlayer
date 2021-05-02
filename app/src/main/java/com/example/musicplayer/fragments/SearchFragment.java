@@ -75,13 +75,26 @@ public class SearchFragment extends Fragment {
                 searchAlbum.clear();
                 searchArtist.clear();
                 searchSongs.clear();
-                for(MediaBrowserCompat.MediaItem song:songs){
-                    boolean title = song.getDescription().getTitle().toString().toLowerCase().contains(search);
-                    boolean artist = song.getDescription().getExtras().getString("artist").toLowerCase().contains(search);
-                    boolean album = song.getDescription().getExtras().getString("artist").toLowerCase().contains(search);
-                    if(title || artist || album){
-                        searchSongs.add(song);
+                if(!search.isEmpty()){
+                    for(MediaBrowserCompat.MediaItem song:songs){
+                        boolean title = song.getDescription().getTitle().toString().toLowerCase().contains(search);
+                        boolean artist = song.getDescription().getExtras().getString("artist").toLowerCase().contains(search);
+                        boolean album = song.getDescription().getExtras().getString("artist").toLowerCase().contains(search);
+                        if(title || artist || album){
+                            searchSongs.add(song);
+                        }
                     }
+                    for(Artist artist:artists){
+                        if(artist.getName().toLowerCase().contains(search)){
+                            searchArtist.add(artist);
+                        }
+                    }
+                    for(Album album:albums){
+                        if(album.getName().toLowerCase().contains(search)){
+                            searchAlbum.add(album);
+                        }
+                    }
+
                 }
                 songsView.getAdapter().notifyDataSetChanged();
                 if(songsView.getVisibility() == View.GONE && searchSongs.size() > 0){
@@ -93,11 +106,7 @@ public class SearchFragment extends Fragment {
                     songsView.setVisibility(View.GONE);
                 }
 
-                for(Artist artist:artists){
-                    if(artist.getName().toLowerCase().contains(search)){
-                        searchArtist.add(artist);
-                    }
-                }
+
                 artistsView.getAdapter().notifyDataSetChanged();
                 if(artistsView.getVisibility() == View.GONE && searchArtist.size() > 0){
                     artistTitle.setVisibility(View.VISIBLE);
@@ -108,12 +117,6 @@ public class SearchFragment extends Fragment {
                     artistsView.setVisibility(View.GONE);
                 }
 
-
-                for(Album album:albums){
-                    if(album.getName().toLowerCase().contains(search)){
-                        searchAlbum.add(album);
-                    }
-                }
                 albumsView.getAdapter().notifyDataSetChanged();
                 if(albumsView.getVisibility() == View.GONE && searchAlbum.size() > 0){
                     albumTitle.setVisibility(View.VISIBLE);

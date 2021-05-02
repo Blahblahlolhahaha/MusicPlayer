@@ -339,7 +339,19 @@ public class CacheWorker {
                 }
             }
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                otherDetails.putString("duration",formatDuration(Long.parseLong(cursor.getString(9))));
+                try{
+                    otherDetails.putString("duration",formatDuration(Long.parseLong(cursor.getString(9))));
+                }catch(NumberFormatException e){
+//                    String path = cursor.getString(2);
+//                    MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+//                    mediaMetadataRetriever.setDataSource(path);
+//                    String duration = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+//                    otherDetails.putString("duration",formatDuration(Long.parseLong(duration)));
+                    System.out.println(cursor.getString(1));
+                    continue;
+
+                }
+
             }
             else{
                 MediaMetadataRetriever mmr = new MediaMetadataRetriever();

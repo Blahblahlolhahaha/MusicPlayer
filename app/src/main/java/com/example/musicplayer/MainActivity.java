@@ -254,6 +254,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.popBackStack("yes",FragmentManager.POP_BACK_STACK_INCLUSIVE);
             playing.setVisibility(View.VISIBLE);
+            playingFragment.onDestroy();
             isPlaying = false;
         }
         else if(album){ //if at albumSongsFragment
