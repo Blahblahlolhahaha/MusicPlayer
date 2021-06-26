@@ -1,7 +1,9 @@
 package com.example.musicplayer.adapters;
 
+import android.content.ContentUris;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,8 +12,11 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 import com.example.musicplayer.workers.Album;
@@ -24,6 +29,8 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
     private final ArrayList<Album> albums;
     private final Context context;
     private boolean search = false;
+    private final static Uri sArtworkUri = Uri
+            .parse("content://media/external/audio/albumart");
 
     public AlbumAdapter(ArrayList<Album> albums, Context context){
         this.albums = albums;
@@ -54,8 +61,9 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.AlbumViewHol
         String albumID = currentAlbum.getID();
         album.setText(currentAlbum.getName());
         artist.setText(currentAlbum.getArtist());
-        Bitmap album_art = ((MainActivity) context).getAlbumArt(albumID);
-        albumArt.setImageBitmap(album_art);
+        Glide.with(context).load(ContentUris.withAppendedId(sArtworkUri, Long.parseLong(albumID))).diskCacheStrategy(DiskCacheStrategy.ALL).into(albumArt);
+//        Bitmap album_art = ((MainActivity) context).getAlbumArt(albumID);
+//        albumArt.setImageBitmap(album_art);
         holder.bind(((MainActivity)context).getAlbumOnClickListener(currentAlbum)); //gets the listener for each album
     }
 

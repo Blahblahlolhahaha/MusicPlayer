@@ -24,6 +24,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/black"
+        android:textColor="@color/white"
         android:hint="@string/name"
         android:textColorHint="#AAAAAA"
         android:textSize="15dp"/>

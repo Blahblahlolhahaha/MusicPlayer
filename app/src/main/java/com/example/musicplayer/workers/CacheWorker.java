@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class CacheWorker {
-    private final LruCache<String, Bitmap> albumArtCache;
+//    private final LruCache<String, Bitmap> albumArtCache;
     private DiskLruCache cache;
     private final Object cacheLock = new Object();
     private final Object loadingAlbum = new Object();
@@ -38,11 +38,10 @@ public class CacheWorker {
     public CacheWorker(Context context,String cacheDirectory){
         this.context = context;
         getSongs();
-        File diskCache = new File(cacheDirectory);
-        initDiskCache(diskCache);
-        albumArtCache = new LruCache<>(1024*1024*100);
-        this.context = context;
-        new BitmapWorkerTask().execute(songManager.getAlbums());
+//        File diskCache = new File(cacheDirectory);
+//        initDiskCache(diskCache);
+//        albumArtCache = new LruCache<>(1024*1024*100);
+//        new BitmapWorkerTask().execute(songManager.getAlbums());
     }
 
     public ArrayList<Album> getAlbumMap(){
@@ -72,19 +71,19 @@ public class CacheWorker {
         }
         return "";
     }
-
-    public Bitmap getAlbumArt(String albumID) {
-        synchronized (loadingAlbum) {
-            while (loading) {
-                try {
-                    loadingAlbum.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            return albumArtCache.get(albumID);
-        }
-    }
+//
+//    public Bitmap getAlbumArt(String albumID) {
+//        synchronized (loadingAlbum) {
+//            while (loading) {
+//                try {
+//                    loadingAlbum.wait();
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//        return albumArtCache.get(albumID);
+//    }
 
     public ArrayList<Album> getArtistAlbums(String artist){
         ArrayList<Album> artistAlbums = new ArrayList<>();
@@ -168,61 +167,61 @@ public class CacheWorker {
 
 
 
-    private class BitmapWorkerTask extends AsyncTask<ArrayList<Album>,Void,Void>{
-        @SafeVarargs
-        @Override
-        protected final Void doInBackground(ArrayList<Album>... albums) {
-            if(albums != null){
-                synchronized (loadingAlbum){
-                    for (Category album:albums[0]
-                    ) {
-                        String albumID = album.getID();
-                        if(albumArtCache.get(albumID) == null){
-                            Bitmap albumArt = getCache(albumID);
-                            if(albumArt == null){
-                                MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
-                                try{
-                                    for (MediaBrowserCompat.MediaItem song:
-                                            songManager.getSongs()) {
-                                        if(song.getDescription().getExtras().getString("albumID").equals(albumID)){
-                                            mediaMetadataRetriever.setDataSource(song.getDescription().getMediaUri().toString());
-                                        }
-                                    }
-                                }catch(RuntimeException e){
-                                    Log.d("sad", "doInBackground: sad");
-                                }
-
-                                byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
-                                if(albumBytes == null){
-                                    albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-                                }
-                                else{
-                                    albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
-                                    if(albumArt == null){
-                                        albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
-                                    }
-                                }
-                                albumArtCache.put(albumID,albumArt);
-                                storeCache(albumArt,albumID);
-                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                                    mediaMetadataRetriever.close();
-                                }
-
-                            }
-
-                            albumArtCache.put(albumID,albumArt);
-                        }
-                    }
-                    loading = false;
-                    loadingAlbum.notifyAll();
-
-                }
-
-            }
-
-            return null;
-        }
-    }
+//    private class BitmapWorkerTask extends AsyncTask<ArrayList<Album>,Void,Void>{
+//        @SafeVarargs
+//        @Override
+//        protected final Void doInBackground(ArrayList<Album>... albums) {
+//            if(albums != null){
+//                synchronized (loadingAlbum){
+//                    for (Category album:albums[0]
+//                    ) {
+//                        String albumID = album.getID();
+//                        if(albumArtCache.get(albumID) == null){
+//                            Bitmap albumArt = getCache(albumID);
+//                            if(albumArt == null){
+//                                MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+//                                try{
+//                                    for (MediaBrowserCompat.MediaItem song:
+//                                            songManager.getSongs()) {
+//                                        if(song.getDescription().getExtras().getString("albumID").equals(albumID)){
+//                                            mediaMetadataRetriever.setDataSource(song.getDescription().getMediaUri().toString());
+//                                        }
+//                                    }
+//                                }catch(RuntimeException e){
+//                                    Log.d("sad", "doInBackground: sad");
+//                                }
+//
+//                                byte[] albumBytes = mediaMetadataRetriever.getEmbeddedPicture();
+//                                if(albumBytes == null){
+//                                    albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
+//                                }
+//                                else{
+//                                    albumArt = BitmapFactory.decodeByteArray(albumBytes,0,albumBytes.length);
+//                                    if(albumArt == null){
+//                                        albumArt =  BitmapFactory.decodeResource(context.getResources(), R.drawable.placeholder);
+//                                    }
+//                                }
+//                                albumArtCache.put(albumID,albumArt);
+//                                storeCache(albumArt,albumID);
+//                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+//                                    mediaMetadataRetriever.close();
+//                                }
+//
+//                            }
+//
+//                            albumArtCache.put(albumID,albumArt);
+//                        }
+//                    }
+//                    loading = false;
+//                    loadingAlbum.notifyAll();
+//
+//                }
+//
+//            }
+//
+//            return null;
+//        }
+//    }
 
     private void getSongs(){
         String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";

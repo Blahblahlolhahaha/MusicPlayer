@@ -4,14 +4,19 @@ import android.Manifest;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -32,6 +37,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.musicplayer.fragments.AlbumSongsFragment;
 import com.example.musicplayer.fragments.ArtistFragment;
 import com.example.musicplayer.dialogs.DeleteDialog;
@@ -53,6 +60,7 @@ import org.riversun.promise.Func;
 import org.riversun.promise.Promise;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
@@ -84,6 +92,8 @@ public class MainActivity extends AppCompatActivity implements Callback {
     private Playlist currentPlaylist;
     private MainFragment main;
     private BroadcastReceiver broadcastReceiver;
+    private final static Uri sArtworkUri = Uri
+            .parse("content://media/external/audio/albumart");
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -124,12 +134,11 @@ public class MainActivity extends AppCompatActivity implements Callback {
                     MediaBrowserCompat.MediaItem currentSong = musicPlayer.getCurrentSong();
                     String songName = (String) currentSong.getDescription().getTitle();
                     String artist = currentSong.getDescription().getExtras().getString("artist");
-                    String album = currentSong.getDescription().getExtras().getString("album");
+                    String album = currentSong.getDescription().getExtras().getString("albumID");
                     songNameTextView.setText(songName);
                     artistTextView.setText(artist);
-                    Bitmap albumArt = getAlbumArt(album);
-                    albumArtView.setImageBitmap(albumArt);
-                    playingFragment.setSongInfo(songName,artist,albumArt,currentSong.getDescription().getExtras().getString("duration"));
+                    Glide.with(getApplicationContext()).load(ContentUris.withAppendedId(sArtworkUri, Long.parseLong(album))).diskCacheStrategy(DiskCacheStrategy.ALL).into(albumArtView).onLoadFailed(ContextCompat.getDrawable(getApplicationContext(),R.drawable.placeholder));
+                    playingFragment.setSongInfo(songName,artist,album,currentSong.getDescription().getExtras().getString("duration"));
                     setLogo(true);
                 }
             }
@@ -397,7 +406,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
     public View.OnClickListener getAlbumOnClickListener(final Album album){
         return view -> {
             //goes into AlbumSongsFragment with selected album
-            AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(album.getSongs(),getAlbumArt(album.getID()),album.getName(),album.getArtist());
+            AlbumSongsFragment albumSongsFragment = new AlbumSongsFragment(album.getSongs(),album.getID(),album.getName(),album.getArtist());
             fragmentTransaction(albumSongsFragment,"album");
             this.album = true;
         };
@@ -436,19 +445,31 @@ public class MainActivity extends AppCompatActivity implements Callback {
         // callback for MusicPlayer to load song information for notification
         songNameTextView.setText(songName);
         artistTextView.setText(artist);
-        Bitmap albumArt = getAlbumArt(album);
-        albumArtView.setImageBitmap(albumArt);
-        playingFragment.setSongInfo(songName,artist,albumArt,duration);
+        Uri imageUri = ContentUris.withAppendedId(sArtworkUri, Long.parseLong(album));
+        Glide.with(getApplicationContext()).load(imageUri).placeholder(R.drawable.placeholder).diskCacheStrategy(DiskCacheStrategy.ALL).into(albumArtView);
+        playingFragment.setSongInfo(songName,artist,album,duration);
         playingFragment.resetSeekBar();
         playingFragment.startThread();
-        mediaSession.setMetadata(new MediaMetadataCompat.Builder()
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE,songName)
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST,artist)
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM,album)
-                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,albumArt)
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,formatTime(duration))
-                .build()
-        );
+        try {
+            mediaSession.setMetadata(new MediaMetadataCompat.Builder()
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE,songName)
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST,artist)
+                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM,album)
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri))
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,formatTime(duration))
+                    .build());
+        } catch (IOException e) {
+            if(e.getMessage().equals("No album art found")){
+                mediaSession.setMetadata(new MediaMetadataCompat.Builder()
+                        .putString(MediaMetadataCompat.METADATA_KEY_TITLE,songName)
+                        .putString(MediaMetadataCompat.METADATA_KEY_ARTIST,artist)
+                        .putString(MediaMetadataCompat.METADATA_KEY_ALBUM,album)
+                        .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART,BitmapFactory.decodeResource(getResources(),R.drawable.placeholder))
+                        .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,formatTime(duration))
+                        .build());
+            }
+            e.printStackTrace();
+        }
         musicPlayer.createNotification();
     }
 
@@ -460,9 +481,9 @@ public class MainActivity extends AppCompatActivity implements Callback {
             play.setBackground(ContextCompat.getDrawable(getApplicationContext(),R.drawable.play));
         }
     }
-    public Bitmap getAlbumArt(String album){
-        return cacheWorker.getAlbumArt(album);
-    }
+//    public Bitmap getAlbumArt(String album){
+//        return cacheWorker.getAlbumArt(album);
+//    }
     public String getAlbumID(String name){return cacheWorker.getAlbumID(name);}
 
     public MusicPlayer getMusicPlayer(){

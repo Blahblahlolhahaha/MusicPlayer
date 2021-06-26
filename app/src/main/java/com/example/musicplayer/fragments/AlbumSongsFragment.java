@@ -1,6 +1,8 @@
 package com.example.musicplayer.fragments;
 
+import android.content.ContentUris;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.media.MediaBrowserCompat;
 import android.view.LayoutInflater;
@@ -11,10 +13,12 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 import com.example.musicplayer.adapters.AlbumSongAdapter;
@@ -26,10 +30,12 @@ import java.util.Objects;
 
 public class AlbumSongsFragment extends Fragment {
     private final ArrayList<MediaBrowserCompat.MediaItem> songs;
-    private final Bitmap albumArt;
+    private final String albumArt;
     private final String albumName,artist;
+    private final static Uri sArtworkUri = Uri
+            .parse("content://media/external/audio/albumart");
 
-    public AlbumSongsFragment(ArrayList<MediaBrowserCompat.MediaItem> songs, Bitmap albumArt, String albumName, String artist){
+    public AlbumSongsFragment(ArrayList<MediaBrowserCompat.MediaItem> songs, String albumArt, String albumName, String artist){
         this.songs = songs;
         this.albumArt = albumArt;
         this.albumName  = albumName;
@@ -55,7 +61,7 @@ public class AlbumSongsFragment extends Fragment {
         AlbumSongAdapter songAdapter = new AlbumSongAdapter(songs,artist,mainActivity);
         recyclerView.setAdapter(songAdapter);
         ImageView albumArtView = view.findViewById(R.id.album_art);
-        albumArtView.setImageBitmap(albumArt);
+        Glide.with(requireContext()).load(ContentUris.withAppendedId(sArtworkUri,Long.parseLong(albumArt))).into(albumArtView);
         toolbar.setTitle(albumName);
         toolbar.setSubtitle(artist);
         assert mainActivity != null;

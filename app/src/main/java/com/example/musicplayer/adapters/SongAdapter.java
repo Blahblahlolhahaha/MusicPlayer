@@ -1,8 +1,12 @@
 package com.example.musicplayer.adapters;
 
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.support.v4.media.MediaBrowserCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,8 +18,11 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.arch.core.executor.TaskExecutor;
 import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 
@@ -29,6 +36,9 @@ import java.util.concurrent.FutureTask;
 public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder>{
     private final ArrayList<MediaBrowserCompat.MediaItem> songs;
     private final Context context;
+    private final static Uri sArtworkUri = Uri
+            .parse("content://media/external/audio/albumart");
+    private final MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
     public SongAdapter(ArrayList<MediaBrowserCompat.MediaItem> songs, Context context){
         this.songs =  songs;
         this.context = context;
@@ -48,11 +58,11 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.SongViewHolder
         TextView songName = holder.cardView.findViewById(R.id.song);
         TextView duration = holder.cardView.findViewById(R.id.duration);
         LinearLayoutCompat linearLayout = holder.cardView.findViewById(R.id.background);
-        Bitmap image = ((MainActivity)context).getAlbumArt(song.getDescription().getExtras().getString("albumID"));
-        albumArt.setImageBitmap(image);
+        Glide.with(context).load(ContentUris.withAppendedId(sArtworkUri, Long.parseLong(song.getDescription().getExtras().getString("albumID")))).diskCacheStrategy(DiskCacheStrategy.ALL).into(albumArt);
         artist.setText(song.getDescription().getExtras().getString("artist"));
         songName.setText(song.getDescription().getTitle());
         duration.setText(song.getDescription().getExtras().getString("duration"));
+
         if(!((MainActivity) context).checkSelected(song)){
             holder.cardView.setSelected(false);
             linearLayout.setBackgroundColor(context.getResources().getColor(R.color.black,null));

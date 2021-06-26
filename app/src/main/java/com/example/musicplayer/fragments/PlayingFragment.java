@@ -1,8 +1,10 @@
 package com.example.musicplayer.fragments;
 
+import android.content.ContentUris;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +20,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
 import com.example.musicplayer.MainActivity;
 import com.example.musicplayer.R;
 import com.example.musicplayer.workers.MusicPlayer;
@@ -25,19 +28,24 @@ import com.example.musicplayer.workers.MusicPlayer;
 import org.w3c.dom.Text;
 
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 public class PlayingFragment extends Fragment {
+    private final static Uri sArtworkUri = Uri
+            .parse("content://media/external/audio/albumart");
     private TextView artistTextView,songNameTextView,end;
     private ImageView albumArtView;
     private ImageButton play;
-    private String artist,song;
+    private String artist,song,albumID;
     private long max;
     private Bitmap albumArt;
     private SeekBar seekBar;
-    private Thread thread;
+    private PositionThread thread;
     private boolean stop;
     private MusicPlayer musicPlayer;
+    private Timer timer;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -60,9 +68,8 @@ public class PlayingFragment extends Fragment {
         end = view.findViewById(R.id.end);
         artistTextView.setText(artist);
         songNameTextView.setText(song);
-        albumArtView.setImageBitmap(albumArt);
+        Glide.with(getContext()).load(ContentUris.withAppendedId(sArtworkUri,Long.parseLong(albumID))).into(albumArtView);
         musicPlayer = ((MainActivity)getContext()).getMusicPlayer();
-        thread = new PositionThread();
         if(musicPlayer.getPlayingStatus()){
             play.setBackground(ContextCompat.getDrawable(getContext().getApplicationContext(),R.drawable.pause));
             seekBar.setMax((int) max);
@@ -76,6 +83,7 @@ public class PlayingFragment extends Fragment {
             if(musicPlayer.getPlayingStatus()){
                 play.setBackground(ContextCompat.getDrawable(getContext().getApplicationContext(),R.drawable.play));
                 musicPlayer.pause();
+                stopThread();
             }
             else{
                 play.setBackground(ContextCompat.getDrawable(getContext().getApplicationContext(),R.drawable.pause));
@@ -124,25 +132,17 @@ public class PlayingFragment extends Fragment {
             }
         });
     }
-    public void setSongInfo(String songName, String artist, Bitmap album,String duration){
+    public void setSongInfo(String songName, String artist, String albumID,String duration){
         song = songName;
         this.artist = artist;
-        this.albumArt = album;
-
+        this.albumID = albumID;
         max = formatTime(duration);
         if(songNameTextView != null){
             songNameTextView.setText(songName);
             artistTextView.setText(artist);
-            albumArtView.setImageBitmap(album);
+            Glide.with(getContext()).load(ContentUris.withAppendedId(sArtworkUri,Long.parseLong(albumID))).into(albumArtView);
             seekBar.setMax((int) max);
             end.setText(duration);
-        }
-    }
-    public void startThread(){
-        if(thread != null){
-            thread.interrupt();
-            thread = new PositionThread();
-            thread.start();
         }
     }
 
@@ -150,6 +150,18 @@ public class PlayingFragment extends Fragment {
         if(seekBar != null){
             seekBar.setProgress(0);
         }
+    }
+
+    public void startThread(){
+        timer = null;
+        timer = new Timer();
+        thread = new PositionThread();
+        timer.scheduleAtFixedRate(thread,0,500);
+
+    }
+
+    public void stopThread(){
+        timer.cancel();
     }
 
     private String formatDuration(long duration) {
@@ -165,38 +177,30 @@ public class PlayingFragment extends Fragment {
         return (long)(Integer.parseInt(minSec[0]) * 60 * 1000 + Integer.parseInt(minSec[1]) * 1000);
     }
 
-    private class PositionThread extends Thread {
+    private class PositionThread extends TimerTask {
         @Override
         public void run() {
-            try{
-                while(musicPlayer.getPlayingStatus()){
-                    if(!stop){
-                        int position = musicPlayer.getPosition();
-                        seekBar.setProgress(position);
+            if(musicPlayer != null && musicPlayer.getPlayingStatus()){
+                try{
+                    int position = musicPlayer.getPosition();
+                    seekBar.setProgress(position);
+                }catch(IllegalStateException e){
+                    try {
+                        Thread.sleep(100);
+                        this.run();
+                    } catch (InterruptedException interruptedException) {
+                        interruptedException.printStackTrace();
                     }
-                    else{
-                        break;
-                    }
-                }
-            }catch(IllegalStateException e){
-                try {
-                    sleep(100);
-                    run();
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
 
+                }
             }
-
         }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(thread.isAlive()){
-            thread.interrupt();
-        }
+        timer.cancel();
     }
 
 }
