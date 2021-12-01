@@ -1,11 +1,20 @@
 package com.example.musicplayer.fragments
 
+import android.app.Activity
+import android.app.PendingIntent
 import android.content.ContentUris
 import android.content.ContentValues
+import android.content.Intent
+import android.content.IntentSender
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
+import android.provider.MediaStore.createWriteRequest
 import android.support.v4.media.MediaBrowserCompat
 import android.text.InputType
+import android.util.Log
 import android.view.*
 import android.widget.Button
 import android.widget.EditText
@@ -18,6 +27,7 @@ import com.example.musicplayer.R
 import org.cmc.music.metadata.MusicMetadata
 import org.cmc.music.myid3.MyID3
 import java.io.File
+import java.io.FileOutputStream
 import kotlin.collections.ArrayList
 
 class DetailsEditFragment(val song: MediaBrowserCompat.MediaItem) : Fragment() {
@@ -74,49 +84,17 @@ class DetailsEditFragment(val song: MediaBrowserCompat.MediaItem) : Fragment() {
             saveButton.visibility = View.GONE
         }
         saveButton.setOnClickListener{
-            var src: File? = null
-            data?.let { src = File(it)}
-            if(src != null){
-                val srcSet = MyID3().read(src)
-                val musicMetadata = MusicMetadata("sad")
-                musicMetadata.songTitle = songEdit.text.toString()
-                musicMetadata.artist = artistEdit.text.toString()
-                musicMetadata.album = albumEdit.text.toString()
-                if(song.description.extras?.getString("disc") != null){
-                    musicMetadata.trackNumber = Integer.parseInt(discEdit.text.toString() + String.format("%03d",Integer.parseInt(trackEdit.text.toString())))
-                }
-                else{
-                    musicMetadata.trackNumber = Integer.parseInt(trackEdit.text.toString())
-                }
-                musicMetadata.year = yearEdit.text.toString()
-                MyID3().update(src,srcSet,musicMetadata)
-                for(editText in editTextArray){
-                    editText.inputType = InputType.TYPE_NULL
-                }
-                toolbar.visibility = View.VISIBLE
-                cancelButton.visibility = View.GONE
-                saveButton.visibility = View.GONE
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song.mediaId!!).toLong())
-                val values = ContentValues()
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    values.put(MediaStore.Audio.Media.IS_PENDING, 1)
-                }
+                val uris : MutableCollection<Uri> = mutableListOf(uri)
                 val contentResolver = mainActivity.contentResolver
-                contentResolver.update(uri, values, null, null)
-                values.clear()
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    values.put(MediaStore.Audio.Media.IS_PENDING, 0)
-                }
-                values.put(MediaStore.Audio.Media.TITLE, musicMetadata.songTitle)
-                values.put(MediaStore.Audio.Media.ARTIST, musicMetadata.artist)
-                values.put(MediaStore.Audio.Media.ALBUM, musicMetadata.album)
-                values.put(MediaStore.Audio.Media.TRACK, musicMetadata.trackNumber.toString())
-                values.put(MediaStore.Audio.Media.YEAR, musicMetadata.year)
-                contentResolver.update(uri, values, null, null)
-                if(mainActivity.getAlbumID(musicMetadata.album).equals("")){
-                    Toast.makeText(context,"Album does not exist yet in this device! It will take awhile for the device to pick up the changes!",Toast.LENGTH_SHORT).show()
-                }
-                mainActivity.onBackPressed()
+                val intent =  createWriteRequest(contentResolver,uris)
+//                    mainActivity.sendEditIntent(intent)
+//                    intent.intentSender.sendIntent(mainActivity,404,null,onFinishedHandler(),null);
+                startIntentSenderForResult(intent.intentSender,404,null,0,0,0,null)
+            }
+            else {
+                save()
             }
         }
     }
@@ -144,5 +122,67 @@ class DetailsEditFragment(val song: MediaBrowserCompat.MediaItem) : Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.edit_menu,menu)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(resultCode == Activity.RESULT_OK && requestCode == 404){
+            save()
+        }
+    }
+
+    fun save(){
+        val mainActivity = context as MainActivity
+        val src: File = File(data)
+        if(src != null){
+            val srcSet = MyID3().read(src)
+            val musicMetadata = MusicMetadata("sad")
+            musicMetadata.songTitle = songEdit.text.toString()
+            musicMetadata.artist = artistEdit.text.toString()
+            musicMetadata.album = albumEdit.text.toString()
+            if(song.description.extras?.getString("disc") != null){
+                musicMetadata.trackNumber = Integer.parseInt(discEdit.text.toString() + String.format("%03d",Integer.parseInt(trackEdit.text.toString())))
+            }
+            else{
+                musicMetadata.trackNumber = Integer.parseInt(trackEdit.text.toString())
+            }
+            musicMetadata.year = yearEdit.text.toString();
+            for(editText in editTextArray){
+                editText.inputType = InputType.TYPE_NULL
+            }
+            toolbar.visibility = View.VISIBLE
+            cancelButton.visibility = View.GONE
+            saveButton.visibility = View.GONE
+            val uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, Integer.parseInt(song.mediaId!!).toLong())
+            val values = ContentValues()
+            val contentResolver = mainActivity.contentResolver
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                values.put(MediaStore.Audio.Media.IS_PENDING, 0)
+            }
+            val tmp = File((context as MainActivity).filesDir.toString() ,"tmp.mp3")
+            MyID3().write(src,tmp, srcSet, musicMetadata)
+            values.put(MediaStore.Audio.Media.TITLE, musicMetadata.songTitle)
+            values.put(MediaStore.Audio.Media.ARTIST, musicMetadata.artist)
+            values.put(MediaStore.Audio.Media.ALBUM, musicMetadata.album)
+            values.put(MediaStore.Audio.Media.TRACK, musicMetadata.trackNumber.toString())
+            values.put(MediaStore.Audio.Media.YEAR, musicMetadata.year)
+            contentResolver.update(uri, values, null, null)
+
+            contentResolver.openFileDescriptor(uri,"w").use{ it ->
+                if (it != null) {
+                    FileOutputStream(it.fileDescriptor).use {
+                        it.write(
+                            tmp.readBytes()
+                        )
+                    }
+                }
+
+            }
+            tmp.delete()
+            if(mainActivity.getAlbumID(musicMetadata.album).equals("")){
+                Toast.makeText(context,"Album does not exist yet in this device! It will take awhile for the device to pick up the changes!",Toast.LENGTH_SHORT).show()
+            }
+            mainActivity.onBackPressed()
+        }
     }
 }

@@ -190,13 +190,13 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
     //For next few functions, to change song, need stop mediaPlayer to prevent clashes
     public void next(){
         mediaPlayer.stop();
-        mediaPlayer.release();
+        mediaPlayer.reset();
         current = current == (songs.size()-1)? 0 : current + 1;
         createMusicPlayer();
     }
     public void previous(){
         mediaPlayer.stop();
-        mediaPlayer.release();
+        mediaPlayer.reset();
         current--;
         if(current<0){
             current = songs.size() - 1;
@@ -205,7 +205,7 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
     }
     public void playAnotherSong(int position){
         mediaPlayer.stop();
-        mediaPlayer.release();
+        mediaPlayer.reset();
         current = position;
         createMusicPlayer();
     }
@@ -387,7 +387,7 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
                             break;
                         case KeyEvent.KEYCODE_MEDIA_STOP:
                             mediaPlayer.stop();
-                            mediaPlayer.release();
+                            mediaPlayer.reset();
                             break;
                     }
                 }
@@ -421,7 +421,7 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
             @Override
             public void onStop() {
                 mediaPlayer.stop();
-                mediaPlayer.release();
+                mediaPlayer.reset();
             }
 
             @Override

@@ -2,11 +2,13 @@ package com.example.musicplayer;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -580,4 +582,11 @@ public class MainActivity extends AppCompatActivity implements Callback {
         return false;
     }
 
+    public void sendEditIntent(PendingIntent pendingIntent){
+        try {
+            startIntentSenderForResult(pendingIntent.getIntentSender(),404,null,0,0,0);
+        } catch (IntentSender.SendIntentException e) {
+            e.printStackTrace();
+        }
+    }
 }
