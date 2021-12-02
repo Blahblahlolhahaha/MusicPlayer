@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements Callback {
                     String album = currentSong.getDescription().getExtras().getString("albumID");
                     songNameTextView.setText(songName);
                     artistTextView.setText(artist);
-                    Glide.with(getApplicationContext()).load(ContentUris.withAppendedId(sArtworkUri, Long.parseLong(album))).diskCacheStrategy(DiskCacheStrategy.ALL).into(albumArtView).onLoadFailed(ContextCompat.getDrawable(getApplicationContext(),R.drawable.placeholder));
+                    Glide.with(getApplicationContext()).load(ContentUris.withAppendedId(sArtworkUri, Long.parseLong(album))).diskCacheStrategy(DiskCacheStrategy.ALL).into(albumArtView);
                     playingFragment.setSongInfo(songName,artist,album,currentSong.getDescription().getExtras().getString("duration"));
                     setLogo(true);
                 }

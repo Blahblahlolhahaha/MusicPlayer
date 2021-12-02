@@ -1,6 +1,8 @@
 package com.example.musicplayer.fragments;
 
+import android.app.Activity;
 import android.content.ContentUris;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
@@ -140,7 +142,10 @@ public class PlayingFragment extends Fragment {
         if(songNameTextView != null){
             songNameTextView.setText(songName);
             artistTextView.setText(artist);
-            Glide.with(getContext()).load(ContentUris.withAppendedId(sArtworkUri,Long.parseLong(albumID))).into(albumArtView);
+            Context context = getContext();
+            if(context != null){
+                Glide.with(context).load(ContentUris.withAppendedId(sArtworkUri,Long.parseLong(albumID))).into(albumArtView);
+            }
             seekBar.setMax((int) max);
             end.setText(duration);
         }
@@ -193,6 +198,17 @@ public class PlayingFragment extends Fragment {
                     }
 
                 }
+            }
+            else{
+                Context context = getContext();
+                if(context != null && play != null){
+                    ((MainActivity)context).runOnUiThread(() -> {
+                        play.setBackground(ContextCompat.getDrawable(context,R.drawable.play));
+                        stopThread();
+                    });
+
+                }
+
             }
         }
     }

@@ -369,7 +369,8 @@ public class CacheWorker {
                             MediaBrowserCompat.MediaItem.FLAG_PLAYABLE);
             songs.add(song);
         }
-        songs.sort(new SortSongs("title"));
+
+        songs.sort(new SortSongs());
 
         while(artistCursor.moveToNext()){
             ArrayList<MediaBrowserCompat.MediaItem> artistSongs = new ArrayList<>();
@@ -450,6 +451,8 @@ public class CacheWorker {
             }
             genres.add(new Category(ID,name,genreSongs));
         }
+        albums.sort(new SortAlbum());
+        artists.sort(new SortArtist());
         albumCursor.close();
         artistCursor.close();
         cursor.close();
@@ -459,12 +462,6 @@ public class CacheWorker {
 
     private static class SortSongs implements Comparator<MediaBrowserCompat.MediaItem>
     {
-        private final String key;
-
-
-        public SortSongs(String key) {
-            this.key = key;
-        }
 
         @Override
         public int compare(MediaBrowserCompat.MediaItem o1, MediaBrowserCompat.MediaItem o2) {
@@ -483,4 +480,30 @@ public class CacheWorker {
 
         return String.format(Locale.ENGLISH,"%02d:%02d", minutes, seconds);
     }
+
+    private static class SortArtist implements Comparator<Artist>
+    {
+
+        @Override
+        public int compare(Artist o1, Artist o2) {
+            String firstValue = (String) o1.getName();
+            String secondValue = (String) o2.getName();
+            assert firstValue != null;
+            assert secondValue != null;
+            return firstValue.compareTo(secondValue);
+        }
+    }
+
+    private static class SortAlbum implements Comparator<Album>
+    {
+        @Override
+        public int compare(Album o1, Album o2) {
+            String firstValue = (String) o1.getName();
+            String secondValue = (String) o2.getName();
+            assert firstValue != null;
+            assert secondValue != null;
+            return firstValue.compareTo(secondValue);
+        }
+    }
+
 }

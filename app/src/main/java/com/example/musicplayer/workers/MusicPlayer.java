@@ -47,7 +47,7 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
     private ArrayList<MediaBrowserCompat.MediaItem> original;
     private ArrayList<MediaBrowserCompat.MediaItem> songs;
     private int current;
-    private boolean shuffle;
+    private boolean shuffle,stopped = false;
     private String repeat;
     private final IBinder musicPlayerBinder = new MusicPlayerBinder();
     private Callback callback;
@@ -137,6 +137,10 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
         //starts the song
         mediaPlayer.start();
         callback.callback((String) songs.get(current).getDescription().getTitle(),songs.get(current).getDescription().getExtras().getString("artist"),songs.get(current).getDescription().getExtras().getString("albumID"),songs.get(current).getDescription().getExtras().getString("duration"));
+        if(stopped){
+            pause();
+            stopped = false;
+        }
     }
 
     public class MusicPlayerBinder extends Binder{
@@ -146,7 +150,11 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
     }
 
     public boolean getPlayingStatus(){
-        return mediaPlayer.isPlaying();
+        try{
+            return mediaPlayer.isPlaying();
+        }catch (IllegalStateException e){
+            return false;
+        }
     }
 
     public int getPosition(){
@@ -325,6 +333,16 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
 
     private void createMusicPlayer(){
         //Creates musicPlayer for playing songs
+        if(current == songs.size()){
+            if(repeat.equals("repeat")){
+                current = 0;
+            }
+            else{
+                current = 0;
+                stopped = true;
+                callback.setLogo(false);
+            }
+        }
         MediaBrowserCompat.MediaItem currentSong = songs.get(current);//get current song
         mediaPlayer = MediaPlayer.create(getApplicationContext(), Uri.parse(currentSong.getDescription().getMediaUri().toString()));
         mediaPlayer.setOnPreparedListener(this);//play song
@@ -332,14 +350,6 @@ public class MusicPlayer extends MediaBrowserServiceCompat implements MediaPlaye
             //when finished plays next song based on repeat status
             mediaPlayer1.release();
             current = repeat.equals("track")? current:current + 1; //repeat current song
-            if(current == songs.size()){
-                if(repeat.equals("repeat")){
-                    current = 0;//goes back to first song
-                }
-                else{
-                    stopSelf();//stops playing song
-                }
-            }
             createMusicPlayer();
         });
         mediaSession.setPlaybackState(new PlaybackStateCompat.Builder()

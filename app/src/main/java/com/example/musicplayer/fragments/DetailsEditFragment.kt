@@ -16,11 +16,10 @@ import android.support.v4.media.MediaBrowserCompat
 import android.text.InputType
 import android.util.Log
 import android.view.*
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.musicplayer.dialogs.DeleteDialog
 import com.example.musicplayer.MainActivity
 import com.example.musicplayer.R
@@ -42,7 +41,10 @@ class DetailsEditFragment(val song: MediaBrowserCompat.MediaItem) : Fragment() {
     private lateinit var discEdit: EditText
     private lateinit var trackEdit: EditText
     private lateinit var yearEdit: EditText
+    private lateinit var albumArt: ImageView
     private lateinit var path: TextView
+    private val sArtworkUri = Uri
+        .parse("content://media/external/audio/albumart")
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.edit_fragment, container, false)
     }
@@ -58,6 +60,13 @@ class DetailsEditFragment(val song: MediaBrowserCompat.MediaItem) : Fragment() {
         trackEdit = view.findViewById(R.id.track)
         yearEdit = view.findViewById(R.id.year)
         path = view.findViewById(R.id.path)
+        albumArt = view.findViewById(R.id.album_art)
+        val album: String? = song.description.extras?.getString("albumID")
+        if (album != null) {
+            Glide.with(requireContext())
+                .load(ContentUris.withAppendedId(sArtworkUri, album.toLong()))
+                .diskCacheStrategy(DiskCacheStrategy.ALL).into(albumArt)
+        }
         editTextArray.addAll(listOf(songEdit, artistEdit, albumEdit, discEdit, trackEdit, yearEdit))
         songEdit.setText(song.description.title)
         artistEdit.setText(song.description.extras?.getString("artist"))
@@ -89,8 +98,6 @@ class DetailsEditFragment(val song: MediaBrowserCompat.MediaItem) : Fragment() {
                 val uris : MutableCollection<Uri> = mutableListOf(uri)
                 val contentResolver = mainActivity.contentResolver
                 val intent =  createWriteRequest(contentResolver,uris)
-//                    mainActivity.sendEditIntent(intent)
-//                    intent.intentSender.sendIntent(mainActivity,404,null,onFinishedHandler(),null);
                 startIntentSenderForResult(intent.intentSender,404,null,0,0,0,null)
             }
             else {
