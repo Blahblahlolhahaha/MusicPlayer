@@ -1,6 +1,7 @@
 package com.example.musicplayer.workers;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -369,8 +370,9 @@ public class CacheWorker {
                             MediaBrowserCompat.MediaItem.FLAG_PLAYABLE);
             songs.add(song);
         }
-
-        songs.sort(new SortSongs());
+        SharedPreferences sharedPreferences = context.getSharedPreferences("sort_order",Context.MODE_PRIVATE);
+        String order = sharedPreferences.getString("order","name");
+        songs.sort(new SortSongs(order));
 
         while(artistCursor.moveToNext()){
             ArrayList<MediaBrowserCompat.MediaItem> artistSongs = new ArrayList<>();
@@ -460,16 +462,53 @@ public class CacheWorker {
         songManager = new SongManager(songs,albums,artists,genres,playlists);
     }
 
-    private static class SortSongs implements Comparator<MediaBrowserCompat.MediaItem>
+    public static class SortSongs implements Comparator<MediaBrowserCompat.MediaItem>
     {
-
+        public String key;
+        public SortSongs(String key){
+            this.key = key;
+        }
         @Override
         public int compare(MediaBrowserCompat.MediaItem o1, MediaBrowserCompat.MediaItem o2) {
-            String firstValue = (String) o1.getDescription().getTitle();
-            String secondValue = (String) o2.getDescription().getTitle();
-            assert firstValue != null;
-            assert secondValue != null;
-            return firstValue.compareTo(secondValue);
+            String firstValue,secondValue;
+            switch (key){
+                case "Name":
+                    firstValue = (String) o1.getDescription().getTitle();
+                    secondValue = (String) o2.getDescription().getTitle();
+                    assert firstValue != null;
+                    assert secondValue != null;
+                    return firstValue.compareTo(secondValue);
+
+                case "Album":
+                    firstValue = o1.getDescription().getExtras().getString("album");
+                    secondValue = o2.getDescription().getExtras().getString("album");
+                    assert firstValue != null;
+                    assert secondValue != null;
+                    if(firstValue.equals(secondValue)){
+                        firstValue = (String) o1.getDescription().getTitle();
+                        secondValue = (String) o2.getDescription().getTitle();
+                        assert firstValue != null;
+                        assert secondValue != null;
+                        return firstValue.compareTo(secondValue);
+                    }
+                    return firstValue.compareTo(secondValue);
+
+                case "Artist":
+                    firstValue = o1.getDescription().getExtras().getString("artist");
+                    secondValue = o2.getDescription().getExtras().getString("artist");
+                    assert firstValue != null;
+                    assert secondValue != null;
+                    if(firstValue.equals(secondValue)){
+                        firstValue = (String) o1.getDescription().getTitle();
+                        secondValue = (String) o2.getDescription().getTitle();
+                        assert firstValue != null;
+                        assert secondValue != null;
+                        return firstValue.compareTo(secondValue);
+                    }
+                    return firstValue.compareTo(secondValue);
+
+            }
+            return 0;
         }
     }
 
